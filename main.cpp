@@ -1,6 +1,7 @@
 #include "tensor/tensor4d.h"
 #include "session.h"
 #include "operator/conv2d.h"
+#include "operator/pooling2d.h"
 #include <iostream>
 
 
@@ -19,17 +20,14 @@ int main(void)
     //conv1->set_weights(1.0f);
     //output = conv1->add_input(a);
     //conv1->forward();
-    Session::instance().add(new Conv2d(K, R, S, valid));
-    std::cout << "Layer success init\n";
+    Session::instance().add(new Conv2d(K, R, S));
+    Session::instance().add(new Pooling2d(2, 1));
 
     //std::cout << Session::instance().size() << "\n";
 
     Tensor4d *a = new Tensor4d(N, C, H, W);
     a->set_value(1);
-    
-    std::cout << "input tensor seccess init\n";
     Session::instance().set_input(a);
-    std::cout << "Set input success\n";
     Session::instance().run();
 
     return 0;
