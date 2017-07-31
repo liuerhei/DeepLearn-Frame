@@ -26,6 +26,7 @@ ITensor *Pooling2d::add_input(ITensor *input, bool del = false)
     if (del || p_output_ == nullptr)
     {
         p_output_ = new Tensor4d(now->N(), C_out, H_out, W_out);
+        p_output_->print_shape();
     }
     return p_output_;
 }
@@ -38,6 +39,7 @@ void Pooling2d::Forward(bool del = false)
         Session::instance().cudnn_handle(), desc_, &alpha, in->desc(),
         in->gpu_pointer(), &beta, out->desc(), out->gpu_pointer() 
     ));
+    out->print_all();
 }
 
 void Pooling2d::set_input_shape(int C, int H, int W)

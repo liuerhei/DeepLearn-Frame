@@ -15,7 +15,8 @@ public:
     ~Conv2d();
     ITensor* add_input(ITensor* input, bool del);
     void Forward(bool del);
-    void set_input_shape(int c, int h, int w);
+    void Backward(cudnnTensorDescriptor_t a, cudnnTensorDescriptor_t b, float *c, bool d);
+    void set_input_shape(int n, int c, int h, int w);
     void set_weights(float data);
 private:
     int K_; // output channel
@@ -26,6 +27,8 @@ private:
     int dilationA_[2];
     float alpha;
     float beta;
+    float *grads_filter_;
+    float *grads_data_;
     size_t size_in_bytes;
     Padding_t padding_mode_;
     cudnnConvolutionDescriptor_t desc_;

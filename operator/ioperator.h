@@ -17,7 +17,7 @@ public:
     virtual void Forward();
     virtual ITensor* add_input(ITensor *, bool del);
 protected:
-    int C_out, H_out, W_out;
+    int N_out, C_out, H_out, W_out;
 };
 
 #endif // IOPERATOR_H

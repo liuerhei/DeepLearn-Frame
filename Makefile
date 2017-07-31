@@ -1,7 +1,7 @@
 # compiler
 #
 CXX = nvcc
-CXXFLAGS = -arch=sm_35 -std=c++11 -O2 -g -Xcompiler -fmax-errors=1 -Xcompiler -g3
+CXXFLAGS = -arch=sm_35 -std=c++11 -O2 -g -Xcompiler -fmax-errors=10 -Xcompiler -g3
 LD = nvcc
 LDFLAGS = -arch=sm_35 -lcuda -lcudnn -lcublas
 

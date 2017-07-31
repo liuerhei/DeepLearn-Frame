@@ -79,9 +79,12 @@ void Tensor4d::print_k(int count) const
 {
     this->sync_to_cpu();
     count = count < this->size_ ? count : this->size_;
-    for(int i = 0; i < count; ++i)
-        std::cout << h_data_[i] << "\t";
-    std::cout << "\n";
+    for(int i = 0; i < H_; ++i)
+    {
+        for(int j = 0; j < W_; ++j)
+              std::cout << h_data_[i * W_ + j] << "\t";
+        std::cout << "\n";
+    }
 }
 
 void Tensor4d::print_all() const

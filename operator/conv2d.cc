@@ -25,10 +25,11 @@ Conv2d::~Conv2d()
 ITensor *Conv2d::add_input(ITensor *input, bool del = false)
 {
     this->p_input_ = dynamic_cast<Tensor4d*>(input);
-    this->set_input_shape(p_input_->C(), p_input_->H(), p_input_->W());
+    this->set_input_shape(p_input_->N(), p_input_->C(), p_input_->H(), p_input_->W());
     if(del || p_output_ == nullptr)
     {
         p_output_ = new Tensor4d(p_input_->N(), C_out, H_out, W_out);
+        p_output_->print_shape();
         Tensor4d *out = dynamic_cast<Tensor4d*>(p_output_);
 
         checkCudnn(cudnnGetConvolutionForwardAlgorithm(
@@ -53,9 +54,27 @@ void Conv2d::Forward(bool del = false)
         Session::instance().workspace(), Session::instance().workspace_size(),
         &beta, out->desc(), out->gpu_pointer() 
     ));
+    out->print_all();
 }
 
-void Conv2d::set_input_shape(int c, int h, int w)
+void Conv2d::Backward(cudnnTensorDescriptor_t uptensordesc, cudnnTensorDescriptor_t downtensordesc, float *grad, bool del)
+{
+     checkCudaError(cudaMalloc(&grads_filter_, sizeof(float) * p_filter_->size()));
+     checkCudaError(cudaMalloc(&grads_data_,   sizeof(float) * N_out * C_out * H_out * W_out));
+     checkCudnn(cudnnConvolutionBackwardFilter(
+          Session::instance().cudnn_handle(), &alpha, p_input_->desc(), p_input_->gpu_pointer(),
+          uptensordesc, grad, desc_, CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0,
+          Session::instance().workspace(), Session::instance().workspace_size(),
+          &beta, p_filter_->desc(), grads_filter_
+     ));
+     checkCudnn(cudnnConvolutionBackwardData(
+          Session::instance().cudnn_handle(), &alpha, p_filter_->desc(), p_filter_->gpu_pointer(),
+          uptensordesc, grad, desc_, CUDNN_CONVOLUTION_BWD_DATA_ALGO_0,
+          Session::instance().workspace(), Session::instance().workspace_size(),
+          &beta, downtensordesc, grads_data_
+     ));
+}
+void Conv2d::set_input_shape(int n, int c, int h, int w)
 {
     p_filter_ = new Filter4d(K_, c, S_, T_);
     p_filter_->print_shape();
@@ -80,7 +99,8 @@ void Conv2d::set_input_shape(int c, int h, int w)
         desc_, 2, padA_, filterStrideA_, dilationA_,
         CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT
     ));
-    C_out = c;
+    C_out = K_;
+    N_out = n;
 }
 
 void Conv2d::set_weights(float data)
