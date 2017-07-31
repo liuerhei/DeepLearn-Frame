@@ -15,9 +15,10 @@ public:
     ~Conv2d();
     ITensor* add_input(ITensor* input, bool del);
     void Forward(bool del);
-    void Backward(cudnnTensorDescriptor_t a, cudnnTensorDescriptor_t b, float *c, bool d);
+    float *Backward(float *c, bool d);
     void set_input_shape(int n, int c, int h, int w);
     void set_weights(float data);
+    void update_weights();
 private:
     int K_; // output channel
     int S_; // kernel height

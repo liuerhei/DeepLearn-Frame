@@ -13,12 +13,12 @@ Tensor4d::Tensor4d(int n, int c, int h, int w)
     checkCudaError(cudaMalloc(&d_data_, this->size_ * sizeof(float)));
     checkCudnn(cudnnCreateTensorDescriptor(&desc_));
     checkCudnn(cudnnSetTensor4dDescriptor(desc_, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, n, c, h, w));
-    std::cout << "Tensor Init success\n";
+    //std::cout << "Tensor Init success\n";
 }
 
 Tensor4d::~Tensor4d()
 {
-    std::cout << "Tensor Delete\n";
+    //std::cout << "Tensor Delete\n";
     checkCudaError(cudaFree(d_data_));
     checkCudnn(cudnnDestroyTensorDescriptor(desc_));
     free(h_data_);
@@ -78,7 +78,6 @@ void Tensor4d::set_value(float val)
 void Tensor4d::print_k(int count) const
 {
     this->sync_to_cpu();
-    count = count < this->size_ ? count : this->size_;
     for(int i = 0; i < H_; ++i)
     {
         for(int j = 0; j < W_; ++j)
@@ -97,12 +96,12 @@ void Tensor4d::print_shape() const
     std::cout << "shape is " << this->N_ << ' ' << this->C_ << ' ' << this->H_ <<' ' << this->W_ << '\n';
 }
 
-const float* Tensor4d::gpu_pointer() const
+float* Tensor4d::gpu_pointer() const
 {
     return this->d_data_;
 }
 
-const float* Tensor4d::cpu_pointer() const
+float* Tensor4d::cpu_pointer() const
 {
     return this->h_data_;
 }

@@ -77,9 +77,15 @@ void Filter4d::set_value(float val)
 void Filter4d::print_k(int count) const
 {
     this->sync_to_cpu();
-    count = count < this->size_ ? count : this->size_;
-    for(int i = 0; i < count; ++i)
-        std::cout << h_data_[i] << "\t";
+    for(int i = 0; i < C_; ++i)
+    {
+        std::cout << "the" << i << "layer\n";
+        for(int j = 0; j < R_; ++j){
+            for(int k = 0; k < S_; ++k)
+                std::cout << h_data_[i * R_* S_ + j * S_ + k] << "\t";
+            std::cout << "\n";
+        }
+    }
     std::cout << "\n";
 }
 
@@ -93,12 +99,12 @@ void Filter4d::print_shape() const
     std::cout << "shape is " << this->K_ << ' ' << this->C_ << ' ' << this->R_ <<' ' << this->S_ << '\n';
 }
 
-const float* Filter4d::gpu_pointer() const
+float* Filter4d::gpu_pointer() const
 {
     return this->d_data_;
 }
 
-const float* Filter4d::cpu_pointer() const
+float* Filter4d::cpu_pointer() const
 {
     return this->h_data_;
 }

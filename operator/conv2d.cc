@@ -29,7 +29,7 @@ ITensor *Conv2d::add_input(ITensor *input, bool del = false)
     if(del || p_output_ == nullptr)
     {
         p_output_ = new Tensor4d(p_input_->N(), C_out, H_out, W_out);
-        p_output_->print_shape();
+        //p_output_->print_shape();
         Tensor4d *out = dynamic_cast<Tensor4d*>(p_output_);
 
         checkCudnn(cudnnGetConvolutionForwardAlgorithm(
@@ -54,25 +54,45 @@ void Conv2d::Forward(bool del = false)
         Session::instance().workspace(), Session::instance().workspace_size(),
         &beta, out->desc(), out->gpu_pointer() 
     ));
-    out->print_all();
+    //out->print_all();
 }
 
-void Conv2d::Backward(cudnnTensorDescriptor_t uptensordesc, cudnnTensorDescriptor_t downtensordesc, float *grad, bool del)
+float *Conv2d::Backward(float *down_grads, bool del = false)
 {
      checkCudaError(cudaMalloc(&grads_filter_, sizeof(float) * p_filter_->size()));
      checkCudaError(cudaMalloc(&grads_data_,   sizeof(float) * N_out * C_out * H_out * W_out));
+     /*
+      * Here need to figure out the upTensorDescriptor and the downTensorDescriptor
+      * For backwardfilter
+      * the x is the current layer input, y is the current layer output, but dy is the loss from upper layer--down_grads
+      */
+
      checkCudnn(cudnnConvolutionBackwardFilter(
           Session::instance().cudnn_handle(), &alpha, p_input_->desc(), p_input_->gpu_pointer(),
-          uptensordesc, grad, desc_, CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0,
+          p_output_->desc(), down_grads, desc_, CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0,
           Session::instance().workspace(), Session::instance().workspace_size(),
           &beta, p_filter_->desc(), grads_filter_
      ));
      checkCudnn(cudnnConvolutionBackwardData(
           Session::instance().cudnn_handle(), &alpha, p_filter_->desc(), p_filter_->gpu_pointer(),
-          uptensordesc, grad, desc_, CUDNN_CONVOLUTION_BWD_DATA_ALGO_0,
+          p_output_->desc(), down_grads, desc_, CUDNN_CONVOLUTION_BWD_DATA_ALGO_0,
           Session::instance().workspace(), Session::instance().workspace_size(),
-          &beta, downtensordesc, grads_data_
+          &beta, p_input_->desc(), grads_data_
      ));
+     return grads_data_;
+}
+
+void Conv2d::update_weights()
+{
+    int size = p_filter_->size();
+    float *pointer = p_filter_->cpu_pointer();
+    p_filter_->sync_to_cpu();
+    float *a = (float*)malloc(sizeof(float) * size);
+    checkCudaError(cudaMemcpy(a, grads_filter_, sizeof(float) * size, cudaMemcpyDeviceToHost));
+    for(int i = 0; i < size; ++i)
+        pointer[i] += a[i];
+    p_filter_->sync_to_gpu();
+    //p_filter_->print_all();
 }
 void Conv2d::set_input_shape(int n, int c, int h, int w)
 {

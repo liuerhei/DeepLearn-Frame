@@ -20,8 +20,8 @@ public:
     void print_k(int count) const;
     void print_all() const;
     void print_shape() const;
-    const float* gpu_pointer() const;
-    const float* cpu_pointer() const;
+    float* gpu_pointer() const;
+    float* cpu_pointer() const;
     float* gpu_pointer();
     void sync_to_cpu() const;
     void sync_to_gpu() const;

@@ -17,6 +17,7 @@ public:
               cudnnPoolingMode_t mode = CUDNN_POOLING_MAX);
     ~Pooling2d();
     ITensor *add_input(ITensor *input, bool del);
+    //Tensor4d *add_input(ITensor *input, bool del);
     void Forward(bool del);
     void set_input_shape(int C, int H, int W);
 private:
