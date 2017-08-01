@@ -11,12 +11,11 @@ class Conv2d : public IOperator
 {
 public:
     Conv2d(int k, int s, int i, Padding_t mode = valid);
-    //Conv2d(int k, int s, int t);
     ~Conv2d();
-    ITensor* add_input(ITensor* input, bool del);
+    void add_input(ITensor* input);
     void Forward(bool del);
     float *Backward(float *c, bool d);
-    void set_input_shape(int n, int c, int h, int w);
+    ITensor *set_input_shape();
     void set_weights(float data);
     void update_weights();
 private:

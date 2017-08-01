@@ -25,27 +25,9 @@ Conv2d::~Conv2d()
     std::cout << "Conv2dLayer Delete\n";
 }
 
-ITensor *Conv2d::add_input(ITensor *input, bool del = false)
+void Conv2d::add_input(ITensor *input)
 {
     this->p_input_ = dynamic_cast<Tensor4d*>(input);
-    this->set_input_shape(p_input_->N(), p_input_->C(), p_input_->H(), p_input_->W());
-    if(del || p_output_ == nullptr)
-    {
-        p_output_ = new Tensor4d(p_input_->N(), C_out, H_out, W_out);
-        //p_output_->print_shape();
-        Tensor4d *out = dynamic_cast<Tensor4d*>(p_output_);
-
-        checkCudnn(cudnnGetConvolutionForwardAlgorithm(
-            Session::instance().cudnn_handle(), p_input_->desc(), p_filter_->desc(), desc_,
-            out->desc(), CUDNN_CONVOLUTION_FWD_PREFER_FASTEST, 0, &algo_
-        ));
-        checkCudnn(cudnnGetConvolutionForwardWorkspaceSize(
-            Session::instance().cudnn_handle(), p_input_->desc(), p_filter_->desc(), desc_,
-            out->desc(), algo_, &size_in_bytes
-        ));
-        Session::instance().update_workspace_size(size_in_bytes);
-    }
-    return p_output_;
 }
 
 void Conv2d::Forward(bool del = false)
@@ -88,22 +70,27 @@ float *Conv2d::Backward(float *down_grads, bool del = false)
 void Conv2d::update_weights()
 {
     int size = p_filter_->size();
+    p_filter_->sync_to_cpu();
     float *pointer = p_filter_->cpu_pointer();
     std::cout << pointer << "\n";
-    p_filter_->sync_to_cpu();
     float *a = (float*)malloc(sizeof(float) * size);
     checkCudaError(cudaMemcpy(a, this->grads_filter_, sizeof(float) * size, cudaMemcpyDeviceToHost));
+    std::cout << "copy success\n";
     for(int i = 0; i < size; ++i)
         pointer[i] += a[i];
     p_filter_->sync_to_gpu();
-    free(pointer);
+    //free(pointer);
     free(a);
     // TODO need to free grads_filter_
     //p_filter_->print_all();
 }
-void Conv2d::set_input_shape(int n, int c, int h, int w)
+ITensor *Conv2d::set_input_shape()
 {
-    p_filter_ = new Filter4d(K_, c, S_, T_);
+    p_filter_ = new Filter4d(K_, p_input_->C(), S_, T_);
+    std::cout << "-------->Alloc new filter here\n";
+    int h = p_input_->H();
+    int w = p_input_->W();
+    int n = p_input_->N();
     p_filter_->print_shape();
     p_filter_->set_value(1);
     filterStrideA_[0] = 1;
@@ -128,6 +115,25 @@ void Conv2d::set_input_shape(int n, int c, int h, int w)
     ));
     C_out = K_;
     N_out = n;
+
+    if(p_output_ == nullptr)
+    {
+        p_output_ = new Tensor4d(p_input_->N(), C_out, H_out, W_out);
+        //p_output_->print_shape();
+        Tensor4d *out = dynamic_cast<Tensor4d*>(p_output_);
+    
+        checkCudnn(cudnnGetConvolutionForwardAlgorithm(
+            Session::instance().cudnn_handle(), p_input_->desc(), p_filter_->desc(), desc_,
+            out->desc(), CUDNN_CONVOLUTION_FWD_PREFER_FASTEST, 0, &algo_
+        ));
+        checkCudnn(cudnnGetConvolutionForwardWorkspaceSize(
+            Session::instance().cudnn_handle(), p_input_->desc(), p_filter_->desc(), desc_,
+            out->desc(), algo_, &size_in_bytes
+        ));
+        Session::instance().update_workspace_size(size_in_bytes);
+    }
+    return p_output_;
+    // TODO need to rebuild
 }
 
 void Conv2d::set_weights(float data)
