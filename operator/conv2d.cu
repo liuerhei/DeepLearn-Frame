@@ -103,9 +103,11 @@ void Conv2d::update_weights()
 void Conv2d::update_weights()
 {
      std::cout << "I am in the update_weights\n";
+
+     std::cout << p_filter_->cpu_pointer() << ' ' << p_filter_->gpu_pointer() << "\n";
      int size = p_filter_->size();
      update<<<(size + 256) / 256, 256>>>(p_filter_->gpu_pointer(), grads_filter_, size);
-     //p_filter_->print_all();
+     p_filter_->print_all();
 }
 
 ITensor *Conv2d::set_input_shape()
@@ -117,6 +119,9 @@ ITensor *Conv2d::set_input_shape()
     int n = p_input_->N();
     p_filter_->print_shape();
     p_filter_->set_value(1);
+    p_filter_->print_all();
+
+    std::cout << p_filter_->cpu_pointer() << ' ' << p_filter_->gpu_pointer() << "\n";
     filterStrideA_[0] = 1;
     filterStrideA_[1] = 1;
     dilationA_[0] = 1;

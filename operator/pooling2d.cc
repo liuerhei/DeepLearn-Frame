@@ -40,7 +40,7 @@ void Pooling2d::Forward(bool del = false)
         Session::instance().cudnn_handle(), desc_, &alpha, in->desc(),
         in->gpu_pointer(), &beta, out->desc(), out->gpu_pointer() 
     ));
-    //out->print_all();
+    out->print_all();
 }
 
 void Pooling2d::set_input_shape(int C, int H, int W)

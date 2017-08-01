@@ -39,7 +39,7 @@ void Conv2d::Forward(bool del = false)
         Session::instance().workspace(), Session::instance().workspace_size(),
         &beta, out->desc(), out->gpu_pointer() 
     ));
-    //out->print_all();
+    out->print_all();
 }
 
 float *Conv2d::Backward(float *down_grads, bool del = false)
@@ -80,11 +80,16 @@ void Conv2d::update_weights()
     checkCudaError(cudaMemcpy(a, this->grads_filter_, sizeof(float) * size, cudaMemcpyDeviceToHost));
     std::cout << "copy success\n";
     for(int i = 0; i < size; ++i)
+    {
+        std::cout << pointer[i] << ' ' << a[i % 9] << "\n";
+        //std::cout << pointer[i] << ' ' << a[i] << "\n";
         pointer[i] += a[i];
+    }
     p_filter_->sync_to_gpu();
     free(a);
     // TODO need to free grads_filter_
-    //p_filter_->print_all();
+    p_filter_->print_all();
+    std::cout << p_filter_->cpu_pointer() << ' ' << p_filter_->gpu_pointer() << "\n";
 }
 ITensor *Conv2d::set_input_shape()
 {
@@ -95,6 +100,8 @@ ITensor *Conv2d::set_input_shape()
     int n = p_input_->N();
     p_filter_->print_shape();
     p_filter_->set_value(1);
+    p_filter_->print_all();
+    std::cout << p_filter_->cpu_pointer() << ' ' << p_filter_->gpu_pointer() << "\n";
     filterStrideA_[0] = 1;
     filterStrideA_[1] = 1;
     dilationA_[0] = 1;
