@@ -4,13 +4,13 @@ IOperator::~IOperator()
 {
 }
 
-void IOperator::Forward()
+void IOperator::Forward(bool del)
 {
 
 }
 
-ITensor* IOperator::add_input(ITensor* input, bool del)
-{
-        
-}
+//ITensor* IOperator::add_input(ITensor* input, bool del)
+//{
+//        
+//}
 

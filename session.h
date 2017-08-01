@@ -17,10 +17,10 @@ public:
     void allocate_workspace();
     void update_workspace_size(size_t size);
     cudnnHandle_t cudnn_handle() const;
-    void add(IOperator *op);
-    void run();
+//    void add(IOperator *op);
+//    void run();
     int size();
-    void set_input(Tensor4d *input);
+//    void set_input(Tensor4d *input);
 
 private:
     Session()

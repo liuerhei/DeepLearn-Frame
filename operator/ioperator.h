@@ -14,8 +14,8 @@ class IOperator
 {
 public:
     virtual ~IOperator();
-    virtual void Forward();
-    virtual ITensor* add_input(ITensor *, bool del);
+    virtual void Forward(bool);
+    //virtual ITensor* add_input(ITensor *, bool del);
 protected:
     int N_out, C_out, H_out, W_out;
 };

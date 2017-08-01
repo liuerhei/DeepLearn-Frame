@@ -44,34 +44,34 @@ size_t Session::workspace_size() const
     return this->workspace_size_;
 }
 
-void Session::add(IOperator *op)
-{
-    model_.push(op);
-}
+//void Session::add(IOperator *op)
+//{
+//    model_.push(op);
+//}
 
 int Session::size()
 {
     return model_.size();
 }
 
-void Session::set_input(Tensor4d *input)
-{
-    p_input_ = input;
-}
-
-void Session::run()
-{
-    ITensor *input = p_input_;
-    ITensor *output = nullptr;
-    while (!model_.empty())
-    {
-        output = model_.front()->add_input(input, false);
-        model_.front()->Forward();
-        delete model_.front();
-        model_.pop();
-        input = output;
-    }
-}
+//void Session::set_input(Tensor4d *input)
+//{
+//    p_input_ = input;
+//}
+//
+//void Session::run()
+//{
+//    ITensor *input = p_input_;
+//    ITensor *output = nullptr;
+//    while (!model_.empty())
+//    {
+//        output = model_.front()->add_input(input, false);
+//        model_.front()->Forward();
+//        delete model_.front();
+//        model_.pop();
+//        input = output;
+//    }
+//}
 
 Session::~Session()
 {

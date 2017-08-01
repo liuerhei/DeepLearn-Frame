@@ -13,6 +13,7 @@ public:
     Conv2d(int k, int s, int i, Padding_t mode = valid);
     ~Conv2d();
     void add_input(ITensor* input);
+    ITensor *add_input(ITensor* input, bool del);
     void Forward(bool del);
     float *Backward(float *c, bool d);
     ITensor *set_input_shape();

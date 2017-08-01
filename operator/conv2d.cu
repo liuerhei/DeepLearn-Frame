@@ -6,6 +6,16 @@
 //    alpha = 1.0f;
 //    bate = 0.0f;
 //}
+
+
+__global__ void update(float *data, float *grad, int size)
+{
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= size) return ;
+    data[idx] += grad[idx];
+    __syncthreads();
+}
+
 Conv2d::Conv2d(int k, int s, int t, Padding_t mode)
     : K_(k), S_(s), T_(t), padding_mode_(mode)
 {
@@ -45,6 +55,7 @@ void Conv2d::Forward(bool del = false)
 float *Conv2d::Backward(float *down_grads, bool del = false)
 {
      checkCudaError(cudaMalloc(&grads_filter_, sizeof(float) * p_filter_->size()));
+     std::cout << N_out << ' ' << C_out << ' ' << H_out << ' ' << W_out << "\n";
      checkCudaError(cudaMalloc(&grads_data_,   sizeof(float) * N_out * C_out * H_out * W_out));
      /*
       * Here need to figure out the upTensorDescriptor and the downTensorDescriptor
@@ -67,6 +78,7 @@ float *Conv2d::Backward(float *down_grads, bool del = false)
      return grads_data_;
 }
 
+/*
 void Conv2d::update_weights()
 {
     std::cout << "I am in the update_weights\n";
@@ -86,6 +98,16 @@ void Conv2d::update_weights()
     // TODO need to free grads_filter_
     //p_filter_->print_all();
 }
+*/
+
+void Conv2d::update_weights()
+{
+     std::cout << "I am in the update_weights\n";
+     int size = p_filter_->size();
+     update<<<(size + 256) / 256, 256>>>(p_filter_->gpu_pointer(), grads_filter_, size);
+     //p_filter_->print_all();
+}
+
 ITensor *Conv2d::set_input_shape()
 {
     p_filter_ = new Filter4d(K_, p_input_->C(), S_, T_);
