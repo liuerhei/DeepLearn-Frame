@@ -141,12 +141,12 @@ int Filter4d::size() const
 
 void Filter4d::sync_to_cpu() const
 {
-    checkCudaError(cudaMemcpy(h_data_, d_data_, size_ * sizeof(float), cudaMemcpyDeviceToHost));
+    checkCudaError(cudaMemcpy(this->h_data_, this->d_data_, this->size_ * sizeof(float), cudaMemcpyDeviceToHost));
 }
 
 void Filter4d::sync_to_gpu() const
 {
-    checkCudaError(cudaMemcpy(d_data_, h_data_, size_ * sizeof(float), cudaMemcpyHostToDevice));
+    checkCudaError(cudaMemcpy(this->d_data_, this->h_data_, this->size_ * sizeof(float), cudaMemcpyHostToDevice));
 }
 
 cudnnFilterDescriptor_t Filter4d::desc() const

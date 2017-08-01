@@ -19,6 +19,9 @@ Conv2d::~Conv2d()
 {
     checkCudnn(cudnnDestroyConvolutionDescriptor(desc_));
     delete p_filter_;
+    delete p_input_;
+    delete p_output_;
+    free(grads_data_);
     std::cout << "Conv2dLayer Delete\n";
 }
 
@@ -86,12 +89,16 @@ void Conv2d::update_weights()
 {
     int size = p_filter_->size();
     float *pointer = p_filter_->cpu_pointer();
+    std::cout << pointer << "\n";
     p_filter_->sync_to_cpu();
     float *a = (float*)malloc(sizeof(float) * size);
-    checkCudaError(cudaMemcpy(a, grads_filter_, sizeof(float) * size, cudaMemcpyDeviceToHost));
+    checkCudaError(cudaMemcpy(a, this->grads_filter_, sizeof(float) * size, cudaMemcpyDeviceToHost));
     for(int i = 0; i < size; ++i)
         pointer[i] += a[i];
     p_filter_->sync_to_gpu();
+    free(pointer);
+    free(a);
+    // TODO need to free grads_filter_
     //p_filter_->print_all();
 }
 void Conv2d::set_input_shape(int n, int c, int h, int w)
