@@ -96,7 +96,7 @@ int main(void)
     conv1->update_weights();
     std::cout << "=====>Finish\n\n";
    
-    for(int i = 2; i < 3; ++i)
+    for(int i = 2; i < 5; ++i)
     {
         std::cout << "#################################################\n";
         std::cout << "This is the " << i << " step\n";
@@ -131,7 +131,7 @@ int main(void)
         float *b_pointer = b->cpu_pointer();
         float *grads1, *grads2;
         for(int i = 0; i < 16; ++i)
-            c_pointer[i] = sqrt(c_pointer[i] - b_pointer[i]);
+            c_pointer[i] = pow((c_pointer[i] - b_pointer[i]), 2);
         c->sync_to_gpu();
         //这里要考虑池化对输出的影响，形状不一致
         grads1 = conv2->Backward(c->gpu_pointer(), false);
