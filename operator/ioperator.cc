@@ -2,15 +2,15 @@
 
 IOperator::~IOperator()
 {
+
 }
 
-void IOperator::Forward(bool del)
+float *IOperator::Backward(float *a, bool del)
+{       
+     return a;
+}
+
+void IOperator::UpdateWeights()
 {
 
 }
-
-//ITensor* IOperator::add_input(ITensor* input, bool del)
-//{
-//        
-//}
-

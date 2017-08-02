@@ -1,10 +1,10 @@
 #ifndef CONV2D_H
 #define CONV2D_H
 
+#include "ioperator.h"
 #include "../wheel.h"
 #include "../tensor/tensor4d.h"
 #include "../tensor/filter4d.h"
-#include "ioperator.h"
 #include "../session.h"
 
 class Conv2d : public IOperator
@@ -12,13 +12,16 @@ class Conv2d : public IOperator
 public:
     Conv2d(int k, int s, int i, Padding_t mode = valid);
     ~Conv2d();
-    void add_input(ITensor* input);
-    ITensor *add_input(ITensor* input, bool del);
+    void AddInput(ITensor* input);
+    ITensor *LayerInit();
     void Forward(bool del);
     float *Backward(float *c, bool d);
-    ITensor *set_input_shape();
-    void set_weights(float data);
-    void update_weights();
+    void UpdateWeights();
+
+    /*
+     * This function is used to init the filter weights by reading data from files
+     */
+    void SetWeights(float data);
 private:
     int K_; // output channel
     int S_; // kernel height

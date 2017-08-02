@@ -5,7 +5,7 @@ class ITensor
 {
 public:
     virtual ~ITensor();
-    virtual void print_shape() const;
+    virtual void PrintShape() const;
 };
 
 #endif // ITENSOR_H

@@ -24,18 +24,18 @@ Filter4d::~Filter4d()
 }
 
 Filter4d::Filter4d(const Filter4d &m) 
-    : size_(m.size()), K_(m.K()), C_(m.C()), R_(m.R()), S_(m.S())
+    : size_(m.Size()), K_(m.K()), C_(m.C()), R_(m.R()), S_(m.S())
 {
     this->h_data_ = (float*)malloc(this->size_ * sizeof(float));
     checkCudaError(cudaMalloc(&d_data_, this->size_ * sizeof(float)));
-    checkCudaError(cudaMemcpy(d_data_, m.gpu_pointer(), this->size_ * sizeof(float), cudaMemcpyDeviceToDevice));
+    checkCudaError(cudaMemcpy(d_data_, m.GpuPointer(), this->size_ * sizeof(float), cudaMemcpyDeviceToDevice));
     checkCudnn(cudnnCreateFilterDescriptor(&desc_));
     checkCudnn(cudnnSetFilter4dDescriptor(desc_, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW, K_, C_, R_, S_));
 }
 
 Filter4d& Filter4d::operator=(const Filter4d &m)
 {
-    this->size_ = m.size();
+    this->size_ = m.Size();
     this->K_    = m.K();
     this->C_    = m.C();
     this->R_ = m.R();
@@ -47,7 +47,7 @@ Filter4d& Filter4d::operator=(const Filter4d &m)
 
     this->h_data_ = (float*)malloc(this->size_ * sizeof(float));
     checkCudaError(cudaMalloc(&d_data_, this->size_ * sizeof(float)));
-    checkCudaError(cudaMemcpy(d_data_, m.gpu_pointer(), this->size_ * sizeof(float), cudaMemcpyDeviceToDevice));
+    checkCudaError(cudaMemcpy(d_data_, m.GpuPointer(), this->size_ * sizeof(float), cudaMemcpyDeviceToDevice));
     checkCudnn(cudnnCreateFilterDescriptor(&desc_));
     checkCudnn(cudnnSetFilter4dDescriptor(desc_, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW, K_, C_, R_, S_));
     return *this;
@@ -58,25 +58,25 @@ bool Filter4d::operator==(const Filter4d &m)
 
 }
 
-void Filter4d::randomize()
+void Filter4d::Randomize()
 {
     for(int i = 0; i < this->size_; i++)
     {
         d_data_[i] = (rand() - RAND_MAX / 2) / (10.0 * RAND_MAX);
     }
-    this->sync_to_gpu();
+    this->SyncToGpu();
 }
 
-void Filter4d::set_value(float val)
+void Filter4d::SetValue(float val)
 {
     for(int i = 0; i < this->size_; ++i)
         h_data_[i] = val;
-    this->sync_to_gpu();
+    this->SyncToGpu();
 }
 
-void Filter4d::print_k(int count) const
+void Filter4d::PrintK(int count) const
 {
-    this->sync_to_cpu();
+    this->SyncToCpu();
     for(int i = 0; i < C_; ++i)
     {
         std::cout << "the" << i << "layer\n";
@@ -89,27 +89,27 @@ void Filter4d::print_k(int count) const
     std::cout << "\n";
 }
 
-void Filter4d::print_all() const
+void Filter4d::PrintAll() const
 {
-    this->print_k(this->size_);
+    this->PrintK(this->size_);
 }
 
-void Filter4d::print_shape() const
+void Filter4d::PrintShape() const
 {
     std::cout << "shape is " << this->K_ << ' ' << this->C_ << ' ' << this->R_ <<' ' << this->S_ << '\n';
 }
 
-float* Filter4d::gpu_pointer() const
+float* Filter4d::GpuPointer() const
 {
     return this->d_data_;
 }
 
-float* Filter4d::cpu_pointer() const
+float* Filter4d::CpuPointer() const
 {
     return this->h_data_;
 }
 
-float *Filter4d::gpu_pointer()
+float *Filter4d::GpuPointer()
 {
     return this->d_data_;
 }
@@ -134,22 +134,22 @@ int Filter4d::S() const
     return this->S_;
 }
 
-int Filter4d::size() const
+int Filter4d::Size() const
 {
     return this->size_;
 }
 
-void Filter4d::sync_to_cpu() const
+void Filter4d::SyncToCpu() const
 {
     checkCudaError(cudaMemcpy(this->h_data_, this->d_data_, this->size_ * sizeof(float), cudaMemcpyDeviceToHost));
 }
 
-void Filter4d::sync_to_gpu() const
+void Filter4d::SyncToGpu() const
 {
     checkCudaError(cudaMemcpy(this->d_data_, this->h_data_, this->size_ * sizeof(float), cudaMemcpyHostToDevice));
 }
 
-cudnnFilterDescriptor_t Filter4d::desc() const
+cudnnFilterDescriptor_t Filter4d::Desc() const
 {
     return this->desc_;
 }

@@ -5,7 +5,7 @@ ITensor::~ITensor()
     
 }
 
-void ITensor::print_shape() const
+void ITensor::PrintShape() const
 {
 
 }

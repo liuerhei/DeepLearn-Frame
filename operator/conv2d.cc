@@ -9,10 +9,13 @@
 Conv2d::Conv2d(int k, int s, int t, Padding_t mode)
     : K_(k), S_(s), T_(t), padding_mode_(mode)
 {
-    alpha = 1.0f;
-    beta = 0.0f;
-    p_input_ = nullptr;
-    p_output_ = nullptr;
+    alpha         = 1.0f;
+    beta          = 0.0f;
+    p_input_      = nullptr;
+    p_output_     = nullptr;
+    p_filter_     = nullptr;
+    grads_filter_ = nullptr;
+    grads_data_   = nullptr;
 }
 
 Conv2d::~Conv2d()
@@ -22,86 +25,37 @@ Conv2d::~Conv2d()
     delete p_input_;
     delete p_output_;
     free(grads_data_);
+    free(grads_filter_);
+    /*
+     * TODO
+     * when the function will be called ?
+     * And whether pointers should be deleted ?
+     */
     std::cout << "Conv2dLayer Delete\n";
 }
 
-void Conv2d::add_input(ITensor *input)
+void Conv2d::AddInput(ITensor *input)
 {
     this->p_input_ = dynamic_cast<Tensor4d*>(input);
+    // When backward complete, the input should be deleted
 }
 
-void Conv2d::Forward(bool del = false)
+ITensor *Conv2d::LayerInit()
 {
-    Tensor4d *out = dynamic_cast<Tensor4d*>(p_output_);
-    checkCudnn(cudnnConvolutionForward(
-        Session::instance().cudnn_handle(), &alpha, p_input_->desc(), p_input_->gpu_pointer(),
-        p_filter_->desc(), p_filter_->gpu_pointer(), desc_, algo_, 
-        Session::instance().workspace(), Session::instance().workspace_size(),
-        &beta, out->desc(), out->gpu_pointer() 
-    ));
-    out->print_all();
-}
-
-float *Conv2d::Backward(float *down_grads, bool del = false)
-{
-     checkCudaError(cudaMalloc(&grads_filter_, sizeof(float) * p_filter_->size()));
-     checkCudaError(cudaMalloc(&grads_data_,   sizeof(float) * N_out * C_out * H_out * W_out));
-     /*
-      * Here need to figure out the upTensorDescriptor and the downTensorDescriptor
-      * For backwardfilter
-      * the x is the current layer input, y is the current layer output, but dy is the loss from upper layer--down_grads
-      */
-
-     checkCudnn(cudnnConvolutionBackwardFilter(
-          Session::instance().cudnn_handle(), &alpha, p_input_->desc(), p_input_->gpu_pointer(),
-          p_output_->desc(), down_grads, desc_, CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0,
-          Session::instance().workspace(), Session::instance().workspace_size(),
-          &beta, p_filter_->desc(), grads_filter_
-     ));
-     checkCudnn(cudnnConvolutionBackwardData(
-          Session::instance().cudnn_handle(), &alpha, p_filter_->desc(), p_filter_->gpu_pointer(),
-          p_output_->desc(), down_grads, desc_, CUDNN_CONVOLUTION_BWD_DATA_ALGO_0,
-          Session::instance().workspace(), Session::instance().workspace_size(),
-          &beta, p_input_->desc(), grads_data_
-     ));
-     return grads_data_;
-}
-
-void Conv2d::update_weights()
-{
-    std::cout << "I am in the update_weights\n";
-    int size = p_filter_->size();
-    std::cout << size << "\n";
-    p_filter_->sync_to_cpu();  // Error here
-    std::cout << "success\n";
-    float *pointer = p_filter_->cpu_pointer();
-    std::cout << pointer << "\n";
-    float *a = (float*)malloc(sizeof(float) * size);
-    checkCudaError(cudaMemcpy(a, this->grads_filter_, sizeof(float) * size, cudaMemcpyDeviceToHost));
-    std::cout << "copy success\n";
-    for(int i = 0; i < size; ++i)
+    if (this->p_filter_ == nullptr)
     {
-        std::cout << pointer[i] << ' ' << a[i % 9] << "\n";
-        //std::cout << pointer[i] << ' ' << a[i] << "\n";
-        pointer[i] += a[i];
+        this->p_filter_ = new Filter4d(K_, p_input_->C(), S_, T_);
+        std::cout << "Add new Filter here\n";
+        p_filter_->PrintShape();
+        SetWeights(1);
+        p_filter_->PrintAll();
     }
-    p_filter_->sync_to_gpu();
-    free(a);
-    // TODO need to free grads_filter_
-    p_filter_->print_all();
-    std::cout << p_filter_->cpu_pointer() << ' ' << p_filter_->gpu_pointer() << "\n";
-}
-ITensor *Conv2d::set_input_shape()
-{
-    p_filter_ = new Filter4d(K_, p_input_->C(), S_, T_);
-    std::cout << "-------->Alloc new filter here\n";
+    // Init the space and weights of filter.
+    
     int h = p_input_->H();
     int w = p_input_->W();
     int n = p_input_->N();
-    p_filter_->print_shape();
-    p_filter_->set_value(1);
-    p_filter_->print_all();
-    std::cout << p_filter_->cpu_pointer() << ' ' << p_filter_->gpu_pointer() << "\n";
+    std::cout << p_filter_->CpuPointer() << ' ' << p_filter_->GpuPointer() << "\n";
     filterStrideA_[0] = 1;
     filterStrideA_[1] = 1;
     dilationA_[0] = 1;
@@ -124,29 +78,90 @@ ITensor *Conv2d::set_input_shape()
     ));
     C_out = K_;
     N_out = n;
-
-    if(p_output_ == nullptr)
+    // compute the size of output
+    
+    if (this->p_output_ == nullptr)
     {
-        p_output_ = new Tensor4d(p_input_->N(), C_out, H_out, W_out);
-        //p_output_->print_shape();
+        p_output_ = new Tensor4d(N_out, C_out, H_out, W_out);
         Tensor4d *out = dynamic_cast<Tensor4d*>(p_output_);
     
         checkCudnn(cudnnGetConvolutionForwardAlgorithm(
-            Session::instance().cudnn_handle(), p_input_->desc(), p_filter_->desc(), desc_,
-            out->desc(), CUDNN_CONVOLUTION_FWD_PREFER_FASTEST, 0, &algo_
+            Session::instance().cudnn_handle(), p_input_->Desc(), p_filter_->Desc(), desc_,
+            out->Desc(), CUDNN_CONVOLUTION_FWD_PREFER_FASTEST, 0, &algo_
         ));
         checkCudnn(cudnnGetConvolutionForwardWorkspaceSize(
-            Session::instance().cudnn_handle(), p_input_->desc(), p_filter_->desc(), desc_,
-            out->desc(), algo_, &size_in_bytes
+            Session::instance().cudnn_handle(), p_input_->Desc(), p_filter_->Desc(), desc_,
+            out->Desc(), algo_, &size_in_bytes
         ));
         Session::instance().update_workspace_size(size_in_bytes);
     }
     return p_output_;
-    // TODO need to rebuild
 }
 
-void Conv2d::set_weights(float data)
+void Conv2d::Forward(bool del = false)
 {
-    p_filter_->set_value(data);
+    Tensor4d *out = dynamic_cast<Tensor4d*>(p_output_);
+    checkCudnn(cudnnConvolutionForward(
+        Session::instance().cudnn_handle(), &alpha, p_input_->Desc(), p_input_->GpuPointer(),
+        p_filter_->Desc(), p_filter_->GpuPointer(), desc_, algo_, 
+        Session::instance().workspace(), Session::instance().workspace_size(),
+        &beta, out->Desc(), out->GpuPointer() 
+    ));
+    out->PrintAll();
+}
+
+float *Conv2d::Backward(float *down_grads, bool del = false)
+{
+     if (grads_filter_ == nullptr && grads_data_ == nullptr)
+     {
+        checkCudaError(cudaMalloc(&grads_filter_, sizeof(float) * p_filter_->Size()));
+        checkCudaError(cudaMalloc(&grads_data_,   sizeof(float) * N_out * C_out * H_out * W_out));
+     }
+     // TODO
+     // Here maybe have BUG
+     // Because the size of each layer make sence, so the space can allocate once.
+     checkCudnn(cudnnConvolutionBackwardFilter(
+          Session::instance().cudnn_handle(), &alpha, p_input_->Desc(), p_input_->GpuPointer(),
+          p_output_->Desc(), down_grads, desc_, CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0,
+          Session::instance().workspace(), Session::instance().workspace_size(),
+          &beta, p_filter_->Desc(), grads_filter_
+     ));
+     checkCudnn(cudnnConvolutionBackwardData(
+          Session::instance().cudnn_handle(), &alpha, p_filter_->Desc(), p_filter_->GpuPointer(),
+          p_output_->Desc(), down_grads, desc_, CUDNN_CONVOLUTION_BWD_DATA_ALGO_0,
+          Session::instance().workspace(), Session::instance().workspace_size(),
+          &beta, p_input_->Desc(), grads_data_
+     ));
+     /*
+      * TODO
+      * when should the input and output tensor delete after backward complete ?
+      */
+     return grads_data_;
+}
+
+void Conv2d::UpdateWeights()
+// TODO
+// Need to rebuild by using CUDA
+{
+    int size = p_filter_->Size();
+    p_filter_->SyncToCpu();  
+    float *pointer = p_filter_->CpuPointer();
+    float *a = (float*)malloc(sizeof(float) * size);
+    checkCudaError(cudaMemcpy(a, this->grads_filter_, sizeof(float) * size, cudaMemcpyDeviceToHost));
+    std::cout << "copy success\n";
+    for(int i = 0; i < size; ++i)
+    {
+        std::cout << pointer[i] << ' ' << a[i % 9] << "\n";
+        pointer[i] += a[i];
+    }
+    p_filter_->SyncToGpu();
+    // TODO need to free grads_filter_
+    p_filter_->PrintAll();
+    free(a);
+}
+
+void Conv2d::SetWeights(float data)
+{
+    p_filter_->SetValue(data);
     // p_filter_->randomize();
 }

@@ -25,18 +25,18 @@ Tensor4d::~Tensor4d()
 }
 
 Tensor4d::Tensor4d(const Tensor4d &m) 
-    : size_(m.size()), N_(m.N()), C_(m.C()), H_(m.H()), W_(m.W())
+    : size_(m.Size()), N_(m.N()), C_(m.C()), H_(m.H()), W_(m.W())
 {
     this->h_data_ = (float*)malloc(this->size_ * sizeof(float));
     checkCudaError(cudaMalloc(&d_data_, this->size_ * sizeof(float)));
-    checkCudaError(cudaMemcpy(d_data_, m.gpu_pointer(), this->size_ * sizeof(float), cudaMemcpyDeviceToDevice));
+    checkCudaError(cudaMemcpy(d_data_, m.GpuPointer(), this->size_ * sizeof(float), cudaMemcpyDeviceToDevice));
     checkCudnn(cudnnCreateTensorDescriptor(&desc_));
     checkCudnn(cudnnSetTensor4dDescriptor(desc_, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, N_, C_, H_, W_));
 }
 
 Tensor4d& Tensor4d::operator=(const Tensor4d &m)
 {
-    this->size_ = m.size();
+    this->size_ = m.Size();
     this->N_    = m.N();
     this->C_    = m.C();
     this->H_ = m.H();
@@ -48,7 +48,7 @@ Tensor4d& Tensor4d::operator=(const Tensor4d &m)
 
     this->h_data_ = (float*)malloc(this->size_ * sizeof(float));
     checkCudaError(cudaMalloc(&d_data_, this->size_ * sizeof(float)));
-    checkCudaError(cudaMemcpy(d_data_, m.gpu_pointer(), this->size_ * sizeof(float), cudaMemcpyDeviceToDevice));
+    checkCudaError(cudaMemcpy(d_data_, m.GpuPointer(), this->size_ * sizeof(float), cudaMemcpyDeviceToDevice));
     checkCudnn(cudnnCreateTensorDescriptor(&desc_));
     checkCudnn(cudnnSetTensor4dDescriptor(desc_, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, N_, C_, H_, W_));
     return *this;
@@ -59,25 +59,25 @@ bool Tensor4d::operator==(const Tensor4d &m)
 
 }
 
-void Tensor4d::randomize()
+void Tensor4d::Randomize()
 {
     for(int i = 0; i < this->size_; i++)
     {
         h_data_[i] = (rand() - RAND_MAX / 2) / (10.0 * RAND_MAX);
     }
-    this->sync_to_gpu();
+    this->SyncToGpu();
 }
 
-void Tensor4d::set_value(float val)
+void Tensor4d::SetValue(float val)
 {
     for(int i = 0; i < this->size_; ++i)
         h_data_[i] = val;
-    this->sync_to_gpu();
+    this->SyncToGpu();
 }
 
-void Tensor4d::print_k(int count) const
+void Tensor4d::PrintK(int count) const
 {
-    this->sync_to_cpu();
+    this->SyncToCpu();
     for(int i = 0; i < H_; ++i)
     {
         for(int j = 0; j < W_; ++j)
@@ -86,27 +86,27 @@ void Tensor4d::print_k(int count) const
     }
 }
 
-void Tensor4d::print_all() const
+void Tensor4d::PrintAll() const
 {
-    this->print_k(this->size_);
+    this->PrintK(this->size_);
 }
 
-void Tensor4d::print_shape() const
+void Tensor4d::PrintShape() const
 {
     std::cout << "shape is " << this->N_ << ' ' << this->C_ << ' ' << this->H_ <<' ' << this->W_ << '\n';
 }
 
-float* Tensor4d::gpu_pointer() const
+float* Tensor4d::GpuPointer() const
 {
     return this->d_data_;
 }
 
-float* Tensor4d::cpu_pointer() const
+float* Tensor4d::CpuPointer() const
 {
     return this->h_data_;
 }
 
-float *Tensor4d::gpu_pointer()
+float *Tensor4d::GpuPointer()
 {
     return this->d_data_;
 }
@@ -131,22 +131,22 @@ int Tensor4d::W() const
     return this->W_;
 }
 
-int Tensor4d::size() const
+int Tensor4d::Size() const
 {
     return this->size_;
 }
 
-void Tensor4d::sync_to_cpu() const
+void Tensor4d::SyncToCpu() const
 {
     checkCudaError(cudaMemcpy(this->h_data_, this->d_data_, this->size_ * sizeof(float), cudaMemcpyDeviceToHost));
 }
 
-void Tensor4d::sync_to_gpu() const
+void Tensor4d::SyncToGpu() const
 {
     checkCudaError(cudaMemcpy(this->d_data_, this->h_data_, this->size_ * sizeof(float), cudaMemcpyHostToDevice));
 }
 
-cudnnTensorDescriptor_t Tensor4d::desc() const
+cudnnTensorDescriptor_t Tensor4d::Desc() const
 {
     return this->desc_;
 }

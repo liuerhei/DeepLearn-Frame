@@ -16,10 +16,10 @@ public:
     Pooling2d(int window, int stride, Padding_t pad = valid,
               cudnnPoolingMode_t mode = CUDNN_POOLING_MAX);
     ~Pooling2d();
-    ITensor *add_input(ITensor *input, bool del);
-    //Tensor4d *add_input(ITensor *input, bool del);
+    void AddInput(ITensor *input);
+    ITensor *LayerInit();
     void Forward(bool del);
-    void set_input_shape(int C, int H, int W);
+
 private:
     int padA_[2];
     int strideA_[2];
@@ -28,8 +28,8 @@ private:
     float alpha;
     float beta;
     cudnnPoolingDescriptor_t desc_;
-    ITensor *p_input_;
-    ITensor *p_output_;
+    Tensor4d *p_input_;
+    Tensor4d *p_output_;
     Padding_t padding_mode_;
     cudnnPoolingMode_t mode_;
 }; 
