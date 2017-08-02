@@ -7,8 +7,8 @@ LDFLAGS = -arch=sm_35 -lcuda -lcudnn -lcublas
 
 # project
 #
-run: main.o wheel.o tensor/itensor.o operator/ioperator.o session.o \
-	operator/conv2d.o operator/pooling2d.o 		            \
+run: main.o wheel.o tensor/itensor.o operator/ioperator.o session.o 		\
+	operator/conv2d.o operator/pooling2d.o operator/activation2d.o		\
 	tensor/tensor4d.o tensor/filter4d.o
 	$(LD) $(LDFLAGS) -o $@ $^
 

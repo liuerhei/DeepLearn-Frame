@@ -2,6 +2,7 @@
 #include "session.h"
 #include "operator/conv2d.h"
 #include "operator/pooling2d.h"
+#include "operator/activation2d.h"
 #include "math.h"
 #include <iostream>
 
@@ -26,15 +27,18 @@ int main(void)
     ITensor *pool1_out = nullptr;
     ITensor *conv2_out = nullptr;
     ITensor *pool2_out = nullptr;
+    ITensor *acti_out  = nullptr;
     //a->randomize();
     Conv2d *conv1 = new Conv2d(K, R, S);
     Pooling2d *pool1 = new Pooling2d(2, 1);
     Conv2d *conv2 = new Conv2d(1, R, S);
     Pooling2d *pool2 = new Pooling2d(2, 1);
+    Activation2d *acti = new Activation2d();
 
     std::cout << "#################################################\n";
     std::cout << "This is the 1 step\n";
-    a->Randomize();
+    //a->Randomize();
+    a->SetValue(1);
     a->PrintAll();
     input = a;
     std::cout << "=====>Conv1 add input\n";
@@ -66,6 +70,12 @@ int main(void)
     pool2_out = pool2->LayerInit();
     std::cout << "=====>Pool2 Forward\n";
     pool2->Forward(false);
+    std::cout << "=====>Activation add input\n";
+    acti->AddInput(pool2_out);
+    std::cout << "=====>Activation set weights\n";
+    acti_out = acti->LayerInit();
+    std::cout << "=====>Activation Forward\n";
+    acti->Forward(false);
     std::cout << "=====>Have Done\n";
 
     std::cout << "=====>Now begin to compute the gradients\n";
@@ -74,6 +84,7 @@ int main(void)
     float *c_pointer = c->CpuPointer();
     float *b_pointer = b->CpuPointer();
     float *grads1, *grads2;
+    float *grads_pool1, *grads_pool2;
     std::cout << "##############################\n";
     for(int i = 0; i < 16; ++i)
     {
@@ -83,58 +94,91 @@ int main(void)
     c->SyncToGpu();
     c->PrintAll();
     //这里要考虑池化对输出的影响，形状不一致
-    grads1 = conv2->Backward(c->GpuPointer(), false);
+    grads_pool2 = pool2->Backward(c->GpuPointer(), false);
+    //grads1 = conv2->Backward(c->GpuPointer(), false);
+    grads1 = conv2->Backward(grads_pool2, false);
     //for(int i = 0; i < 16; ++i)
     //    std::cout << grads1[i] << ' ';
     //std::cout << "\n";
     std::cout << "=====>Backward success\n";
     conv2->UpdateWeights();
     std::cout << "=====>updata success\n";
-    grads2 = conv1->Backward(grads1, false);
+    grads_pool1 = pool1->Backward(grads1, false);
+    grads2 = conv1->Backward(grads_pool1, false);
     conv1->UpdateWeights();
     std::cout << "=====>Finish\n\n";
-    for(int i = 2; i < 5; ++i)
+    for(int i = 2; i < 5000; ++i)
     {
         std::cout << "#################################################\n";
-        std::cout << "This is the " << i << " step\n";
+        std::cout << "This is the 1 step\n";
         a->Randomize();
+        //a->SetValue(1);
+        a->PrintAll();
         input = a;
         std::cout << "=====>Conv1 add input\n";
         conv1->AddInput(input);
+        //std::cout << "=====>Conv1 set weights\n";
+        //conv1_out = conv1->LayerInit();
+        //conv1->set_weights(1);
         std::cout << "=====>Conv1 Forward\n";
         conv1->Forward(false);
         
         std::cout << "=====>Pool1 add input\n";
         pool1->AddInput(conv1_out);
+        //std::cout << "=====>Pool1 set weights\n";
+        //pool1_out = pool1->LayerInit();
         std::cout << "=====>Pool1 Forward\n";
         pool1->Forward(false);
 
         std::cout << "=====>Conv2 add input\n";
         conv2->AddInput(pool1_out);
-        //conv2_out = conv2->set_input_shape();
+        //std::cout << "=====>Conv2 set weights\n";
+        //conv2_out = conv2->LayerInit();
+        //conv2->set_weights(1);
         std::cout << "=====>Conv2 Forward\n";
         conv2->Forward(false);
 
         std::cout << "=====>Pool2 add input\n";
         pool2->AddInput(conv2_out);
+        //std::cout << "=====>Pool2 set weights\n";
+        //pool2_out = pool2->LayerInit();
         std::cout << "=====>Pool2 Forward\n";
         pool2->Forward(false);
+        std::cout << "=====>Activation add input\n";
+        acti->AddInput(pool2_out);
+        std::cout << "=====>Activation set weights\n";
+        acti_out = acti->LayerInit();
+        std::cout << "=====>Activation Forward\n";
+        acti->Forward(false);
         std::cout << "=====>Have Done\n";
 
         std::cout << "=====>Now begin to compute the gradients\n";
         c = dynamic_cast<Tensor4d*>(pool2_out);
+        c->PrintAll();
         float *c_pointer = c->CpuPointer();
         float *b_pointer = b->CpuPointer();
         float *grads1, *grads2;
+        float *grads_pool1, *grads_pool2;
+        std::cout << "##############################\n";
         for(int i = 0; i < 16; ++i)
+        {
+            std::cout << c_pointer[i] << ' ' << b_pointer[i] << "\n";
             c_pointer[i] = pow((c_pointer[i] - b_pointer[i]), 2);
+        }
         c->SyncToGpu();
+        c->PrintAll();
         //这里要考虑池化对输出的影响，形状不一致
-        grads1 = conv2->Backward(c->GpuPointer(), false);
+        grads_pool2 = pool2->Backward(c->GpuPointer(), false);
+        //grads1 = conv2->Backward(c->GpuPointer(), false);
+        grads1 = conv2->Backward(grads_pool2, false);
+        //for(int i = 0; i < 16; ++i)
+        //    std::cout << grads1[i] << ' ';
+        //std::cout << "\n";
         std::cout << "=====>Backward success\n";
         conv2->UpdateWeights();
         std::cout << "=====>updata success\n";
-        grads2 = conv1->Backward(grads1, false);
+        grads_pool1 = pool1->Backward(grads1, false);
+        grads2 = conv1->Backward(grads_pool1, false);
         conv1->UpdateWeights();
         std::cout << "=====>Finish\n\n";
     }

@@ -11,6 +11,7 @@ Pooling2d::Pooling2d(int window, int stride, Padding_t pad, cudnnPoolingMode_t m
     this->windowDimA_[0] = this->windowDimA_[1] = window;
     this->p_output_      = nullptr;
     this->p_input_       = nullptr;
+    this->grads_input_   = nullptr;
 }
 
 Pooling2d::~Pooling2d()
@@ -63,6 +64,27 @@ void Pooling2d::Forward(bool del = false)
         this->p_input_->GpuPointer(), &beta, this->p_output_->Desc(), this->p_output_->GpuPointer() 
     ));
     this->p_output_->PrintAll();
+}
+
+float *Pooling2d::Backward(float *grads_down, bool del)
+{
+    if (grads_input_ == nullptr)
+    {
+        checkCudaError(cudaMalloc(&grads_input_, sizeof(float) * p_input_->Size()));
+    }
+    checkCudnn(cudnnPoolingBackward(
+        Session::instance().cudnn_handle(), desc_, &alpha, p_output_->Desc(), p_output_->GpuPointer(), 
+        p_output_->Desc(), grads_down, p_input_->Desc(), p_input_->GpuPointer(),
+        &beta, p_input_->Desc(), grads_input_
+    ));
+    
+    float *a = (float *)malloc(sizeof(float) * p_input_->Size());
+    checkCudaError(cudaMemcpy(a, grads_input_, sizeof(float) * p_input_->Size(), cudaMemcpyDeviceToHost));
+    for (int i = 0; i < p_input_->Size(); ++i)
+        std::cout << a[i] << ' ';
+    std::cout << "\n";
+    free(a);
+    return grads_input_;
 }
 
 

@@ -3,7 +3,7 @@
 
 #include "../session.h"
 /*
- * Pooling layer for 3D inputs.
+ * Pooling layer for 2D inputs.
  * Here support pooling as follow:
  * CUDNN_POOLING_MAX
  * CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING
@@ -13,12 +13,12 @@
 class Pooling2d : public IOperator
 {
 public:
-    Pooling2d(int window, int stride, Padding_t pad = valid,
-              cudnnPoolingMode_t mode = CUDNN_POOLING_MAX);
+    Pooling2d(int window, int stride, Padding_t pad = valid, cudnnPoolingMode_t mode = CUDNN_POOLING_MAX);
     ~Pooling2d();
-    void AddInput(ITensor *input);
+    void AddInput(ITensor *);
     ITensor *LayerInit();
-    void Forward(bool del);
+    void Forward(bool);
+    float *Backward(float *grads_down, bool del);
 
 private:
     int padA_[2];
@@ -27,6 +27,7 @@ private:
     int nbDims_;
     float alpha;
     float beta;
+    float *grads_input_;
     cudnnPoolingDescriptor_t desc_;
     Tensor4d *p_input_;
     Tensor4d *p_output_;
