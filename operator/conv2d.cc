@@ -16,6 +16,8 @@ Conv2d::Conv2d(int k, int s, int t, Padding_t mode)
     p_filter_     = nullptr;
     grads_filter_ = nullptr;
     grads_data_   = nullptr;
+    grads_bias_   = nullptr;
+    bias_         = nullptr;
 }
 
 Conv2d::~Conv2d()
@@ -24,6 +26,7 @@ Conv2d::~Conv2d()
     delete p_filter_;
     delete p_input_;
     delete p_output_;
+    delete bias_;
     free(grads_data_);
     free(grads_filter_);
     /*
@@ -48,14 +51,14 @@ ITensor *Conv2d::LayerInit()
         std::cout << "Add new Filter here\n";
         p_filter_->PrintShape();
         SetWeights(1);
-        p_filter_->PrintAll();
+        //p_filter_->PrintAll();
     }
     // Init the space and weights of filter.
     
     int h = p_input_->H();
     int w = p_input_->W();
     int n = p_input_->N();
-    std::cout << p_filter_->CpuPointer() << ' ' << p_filter_->GpuPointer() << "\n";
+    //std::cout << p_filter_->CpuPointer() << ' ' << p_filter_->GpuPointer() << "\n";
     filterStrideA_[0] = 1;
     filterStrideA_[1] = 1;
     dilationA_[0] = 1;
@@ -95,6 +98,12 @@ ITensor *Conv2d::LayerInit()
         ));
         Session::instance().update_workspace_size(size_in_bytes);
     }
+
+    if (this->bias_ == nullptr)
+    {
+        bias_ = new Tensor4d(N_out, C_out, H_out, W_out);
+        bias_->SetValue(1);
+    }
     return p_output_;
 }
 
@@ -107,7 +116,11 @@ void Conv2d::Forward(bool del = false)
         Session::instance().workspace(), Session::instance().workspace_size(),
         &beta, out->Desc(), out->GpuPointer() 
     ));
-    out->PrintAll();
+    // out->PrintAll();
+    //checkCudnn(cudnnAddTensor(
+    //    Session::instance().cudnn_handle(), &alpha, bias_->Desc(), bias_->GpuPointer(), &beta, out->Desc(), out->GpuPointer()
+    //));
+    //out->PrintAll();
 }
 
 float *Conv2d::Backward(float *down_grads, bool del = false)
@@ -115,7 +128,8 @@ float *Conv2d::Backward(float *down_grads, bool del = false)
      if (grads_filter_ == nullptr && grads_data_ == nullptr)
      {
         checkCudaError(cudaMalloc(&grads_filter_, sizeof(float) * p_filter_->Size()));
-        checkCudaError(cudaMalloc(&grads_data_,   sizeof(float) * N_out * C_out * H_out * W_out));
+        //checkCudaError(cudaMalloc(&grads_data_,   sizeof(float) * N_out * C_out * H_out * W_out));
+        checkCudaError(cudaMalloc(&grads_data_,   sizeof(float) * p_input_->Size()));
      }
      // TODO
      // Here maybe have BUG
@@ -136,6 +150,28 @@ float *Conv2d::Backward(float *down_grads, bool del = false)
       * TODO
       * when should the input and output tensor delete after backward complete ?
       */
+
+     /*
+     float *a = (float *)malloc(sizeof(float) * p_filter_->Size());
+     checkCudaError(cudaMemcpy(a, grads_filter_, sizeof(float) * p_filter_->Size(), cudaMemcpyDeviceToHost));
+     std::cout << "conv filter gradients\n";
+     for(int i = 0; i < p_filter_->Size(); ++i)
+        std::cout << a[i] << ' ';
+     //   a[i] = i;
+     //checkCudaError(cudaMemcpy(grads_filter_, a, sizeof(float) * p_filter_->Size(), cudaMemcpyHostToDevice));
+     // This is a test, it seems that the gradients always is 0
+     std::cout << "\n";
+
+     float *b = (float *)malloc(sizeof(float) * p_input_->Size());
+     checkCudaError(cudaMemcpy(a, grads_data_,  sizeof(float) * p_input_->Size(),   cudaMemcpyDeviceToHost));
+     std::cout << "conv data gradients\n";
+     for(int i = 0; i < p_input_->Size(); ++i)
+        std::cout << b[i] << ' ';
+     std::cout << "\n";
+     //free(a);
+     //free(b);
+     */
+
      return grads_data_;
 }
 
@@ -148,7 +184,6 @@ void Conv2d::UpdateWeights()
     float *pointer = p_filter_->CpuPointer();
     float *a = (float*)malloc(sizeof(float) * size);
     checkCudaError(cudaMemcpy(a, this->grads_filter_, sizeof(float) * size, cudaMemcpyDeviceToHost));
-    std::cout << "copy success\n";
     for(int i = 0; i < size; ++i)
     {
         std::cout << pointer[i] << ' ' << a[i % 9] << "\n";
@@ -156,7 +191,7 @@ void Conv2d::UpdateWeights()
     }
     p_filter_->SyncToGpu();
     // TODO need to free grads_filter_
-    p_filter_->PrintAll();
+    //p_filter_->PrintAll();
     free(a);
 }
 

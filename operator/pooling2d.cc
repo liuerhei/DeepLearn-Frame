@@ -63,14 +63,20 @@ void Pooling2d::Forward(bool del = false)
         Session::instance().cudnn_handle(), desc_, &alpha, this->p_input_->Desc(),
         this->p_input_->GpuPointer(), &beta, this->p_output_->Desc(), this->p_output_->GpuPointer() 
     ));
-    this->p_output_->PrintAll();
+    // this->p_output_->PrintAll();
 }
 
 float *Pooling2d::Backward(float *grads_down, bool del)
 {
-    if (grads_input_ == nullptr)
+    //float *b = (float *)malloc(sizeof(float) * p_output_->Size());
+    //std::cout << "Pooling recive gradients\n";
+    //checkCudaError(cudaMemcpy(b, grads_down, sizeof(float) * p_output_->Size(), cudaMemcpyDeviceToHost));
+    //for (int i = 0; i < p_output_->Size(); ++i)
+    //    std::cout << b[i] << ' ';
+    //std::cout << "\n";
+    if (this->grads_input_ == nullptr)
     {
-        checkCudaError(cudaMalloc(&grads_input_, sizeof(float) * p_input_->Size()));
+        checkCudaError(cudaMalloc(&this->grads_input_, sizeof(float) * p_input_->Size()));
     }
     checkCudnn(cudnnPoolingBackward(
         Session::instance().cudnn_handle(), desc_, &alpha, p_output_->Desc(), p_output_->GpuPointer(), 
@@ -80,11 +86,16 @@ float *Pooling2d::Backward(float *grads_down, bool del)
     
     float *a = (float *)malloc(sizeof(float) * p_input_->Size());
     checkCudaError(cudaMemcpy(a, grads_input_, sizeof(float) * p_input_->Size(), cudaMemcpyDeviceToHost));
-    for (int i = 0; i < p_input_->Size(); ++i)
+    std::cout << "pool data gradients\n";
+    //for (int i = 0; i < p_input_->Size(); ++i)
+    for (int i = 0; i < 20; ++i)
         std::cout << a[i] << ' ';
     std::cout << "\n";
     free(a);
+
     return grads_input_;
 }
+
+
 
 

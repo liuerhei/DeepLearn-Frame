@@ -33,6 +33,7 @@ private:
     float beta;
     float *grads_filter_;
     float *grads_data_;
+    float *grads_bias_;
     size_t size_in_bytes;
     Padding_t padding_mode_;
     cudnnConvolutionDescriptor_t desc_;
@@ -40,6 +41,7 @@ private:
     Tensor4d *p_input_;
     Tensor4d *p_output_;
     Filter4d *p_filter_;
+    Tensor4d *bias_;
 };
 
 #endif
