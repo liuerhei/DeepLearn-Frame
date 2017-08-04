@@ -24,15 +24,13 @@ public:
     void AddInput(ITensor *);
     ITensor *LayerInit();
     void Forward(bool del = false);
-    //float *Backward(float *, bool);
-    //void UpdateWeights();
+    float *Backward(float *grads_down, bool);
 private:
     cudnnActivationMode_t mode_;
     cudnnActivationDescriptor_t desc_;
     Tensor4d *p_input_;
     Tensor4d *p_output_;
-    //float *grads_filter_;
-    //float *grads_data_;
+    float *grads_input_;
     float alpha;
     float beta;
 };

@@ -85,6 +85,7 @@ int main(void)
 
     float *c_pointer = c->CpuPointer();
     float *b_pointer = b->CpuPointer();
+    float *grads_acti;
     float *grads1, *grads2;
     float *grads_pool1, *grads_pool2;
     float *h_conv1, *h_conv2;
@@ -101,7 +102,9 @@ int main(void)
      * TODO
      * Here is the loss function compution, should move to device by using cuda. Does not need doing this in the host.
      */
-    grads_pool2 = pool2->Backward(c->GpuPointer(), false);
+    grads_acti = acti->Backward(c->GpuPointer(), false);
+    //grads_pool2 = pool2->Backward(c->GpuPointer(), false);
+    grads_pool2 = pool2->Backward(grads_acti, false);
     //grads1 = conv2->Backward(c->GpuPointer(), false);
     grads1 = conv2->Backward(grads_pool2, false);
     std::cout << "=====>Conv2 Backward success\n";
