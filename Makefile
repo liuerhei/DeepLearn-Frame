@@ -14,8 +14,8 @@ run: main.o wheel.o tensor/itensor.o operator/ioperator.o session.o 		\
 
 # .cu file
 #
-#operator/conv2d.o: operator/conv2d.cu
-#	 $(CXX) $(CXXFLAGS)   -c -o $@ $^
+operator/conv2d.o: operator/conv2d.cu 
+	 $(CXX) $(CXXFLAGS)   -c -o $@ $^
 #
 # phony target
 #

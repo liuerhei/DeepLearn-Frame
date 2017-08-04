@@ -71,17 +71,17 @@ int main(void)
     pool2_out = pool2->LayerInit();
     std::cout << "=====>Pool2 Forward\n";
     pool2->Forward(false);
-    //std::cout << "=====>Activation add input\n";
-    //acti->AddInput(pool2_out);
-    //std::cout << "=====>Activation set weights\n";
-    //acti_out = acti->LayerInit();
-    //std::cout << "=====>Activation Forward\n";
-    //acti->Forward(false);
+    std::cout << "=====>Activation add input\n";
+    acti->AddInput(pool2_out);
+    std::cout << "=====>Activation set weights\n";
+    acti_out = acti->LayerInit();
+    std::cout << "=====>Activation Forward\n";
+    acti->Forward(false);
     std::cout << "=====>Have Done\n";
 
     std::cout << "=====>Now begin to compute the gradients\n";
     c = dynamic_cast<Tensor4d*>(pool2_out);
-   //     c->PrintAll();
+    //c = dynamic_cast<Tensor4d*>(acti_out);
 
     float *c_pointer = c->CpuPointer();
     float *b_pointer = b->CpuPointer();

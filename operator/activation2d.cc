@@ -42,7 +42,7 @@ void Activation2d::Forward(bool del)
     checkCudnn(cudnnActivationForward(
         Session::instance().cudnn_handle(), desc_, &alpha, p_input_->Desc(), p_input_->GpuPointer(),
         &beta, p_output_->Desc(), p_output_->GpuPointer()));
-    p_output_->PrintAll();
+    //p_output_->PrintAll();
 }
 
 

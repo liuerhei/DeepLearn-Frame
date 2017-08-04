@@ -186,7 +186,8 @@ void Conv2d::UpdateWeights()
     checkCudaError(cudaMemcpy(a, this->grads_filter_, sizeof(float) * size, cudaMemcpyDeviceToHost));
     for(int i = 0; i < size; ++i)
     {
-        std::cout << pointer[i] << ' ' << a[i % 9] << "\n";
+        //std::cout << pointer[i] << ' ' << a[i % 9] << "\n";
+        std::cout << pointer[i] << ' ' << a[i] << "\n";
         pointer[i] += a[i];
     }
     p_filter_->SyncToGpu();
