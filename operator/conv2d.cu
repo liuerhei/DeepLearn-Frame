@@ -32,6 +32,7 @@ Conv2d::~Conv2d()
     delete bias_;
     free(grads_data_);
     free(grads_filter_);
+    //free(grads_bias_);
     /*
      * TODO
      * when the function will be called ?
@@ -43,6 +44,8 @@ Conv2d::~Conv2d()
 void Conv2d::AddInput(ITensor *input)
 {
     this->p_input_ = dynamic_cast<Tensor4d*>(input);
+    //this->p_input_->PrintK(10);
+    this->p_input_->PrintAll();
     // When backward complete, the input should be deleted
 }
 
@@ -78,6 +81,10 @@ ITensor *Conv2d::LayerInit()
         W_out = w / filterStrideA_[1] + w % filterStrideA_[1];
     }
     checkCudnn(cudnnCreateConvolutionDescriptor(&desc_));
+    //checkCudnn(cudnnSetConvolution2dDescriptor(
+    //    desc_, padA_[0], padA_[1], filterStrideA_[0], filterStrideA_[1],
+    //    dilationA_[0], dilationA_[1], CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT
+    //));
     checkCudnn(cudnnSetConvolutionNdDescriptor(
         desc_, 2, padA_, filterStrideA_, dilationA_,
         CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT
@@ -91,10 +98,14 @@ ITensor *Conv2d::LayerInit()
         p_output_ = new Tensor4d(N_out, C_out, H_out, W_out);
         Tensor4d *out = dynamic_cast<Tensor4d*>(p_output_);
     
+        p_input_->PrintShape();
+        p_filter_->PrintShape();
+        out->PrintShape();
         checkCudnn(cudnnGetConvolutionForwardAlgorithm(
             Session::instance().cudnn_handle(), p_input_->Desc(), p_filter_->Desc(), desc_,
             out->Desc(), CUDNN_CONVOLUTION_FWD_PREFER_FASTEST, 0, &algo_
         ));
+        std::cout << algo_ << "\n";
         checkCudnn(cudnnGetConvolutionForwardWorkspaceSize(
             Session::instance().cudnn_handle(), p_input_->Desc(), p_filter_->Desc(), desc_,
             out->Desc(), algo_, &size_in_bytes
@@ -102,24 +113,25 @@ ITensor *Conv2d::LayerInit()
         Session::instance().update_workspace_size(size_in_bytes);
     }
 
-    if (this->bias_ == nullptr)
-    {
-        bias_ = new Tensor4d(N_out, C_out, H_out, W_out);
-        bias_->SetValue(1);
-    }
+    //if (this->bias_ == nullptr)
+    //{
+    //    bias_ = new Tensor4d(N_out, C_out, H_out, W_out);
+    //    bias_->SetValue(1);
+    //}
     return p_output_;
 }
 
 void Conv2d::Forward(bool del = false)
 {
     Tensor4d *out = dynamic_cast<Tensor4d*>(p_output_);
+    std::cout << "Work space size is: " << Session::instance().workspace() << "\n";
     checkCudnn(cudnnConvolutionForward(
         Session::instance().cudnn_handle(), &alpha, p_input_->Desc(), p_input_->GpuPointer(),
         p_filter_->Desc(), p_filter_->GpuPointer(), desc_, algo_, 
         Session::instance().workspace(), Session::instance().workspace_size(),
         &beta, out->Desc(), out->GpuPointer() 
     ));
-    // out->PrintAll();
+    out->PrintAll();
     //checkCudnn(cudnnAddTensor(
     //    Session::instance().cudnn_handle(), &alpha, bias_->Desc(), bias_->GpuPointer(), &beta, out->Desc(), out->GpuPointer()
     //));

@@ -25,6 +25,7 @@ Pooling2d::~Pooling2d()
 void Pooling2d::AddInput(ITensor *input)
 {
     this->p_input_ = dynamic_cast<Tensor4d*>(input);
+    this->p_input_->PrintAll();
 }
 
 ITensor *Pooling2d::LayerInit()
@@ -48,6 +49,7 @@ ITensor *Pooling2d::LayerInit()
     checkCudnn(cudnnSetPoolingNdDescriptor(
         desc_, mode_, CUDNN_PROPAGATE_NAN, nbDims_, windowDimA_, padA_, strideA_
     ));
+    // Should change to use cudnnSetPooling2dDescriptor ?
     C_out = c;
     
     if (this->p_output_ == nullptr)
@@ -63,7 +65,10 @@ void Pooling2d::Forward(bool del = false)
         Session::instance().cudnn_handle(), desc_, &alpha, this->p_input_->Desc(),
         this->p_input_->GpuPointer(), &beta, this->p_output_->Desc(), this->p_output_->GpuPointer() 
     ));
-    // this->p_output_->PrintAll();
+    //this->p_output_->PrintShape();
+    this->p_output_->PrintShape();
+    //this->p_output_->PrintK(10);
+    this->p_output_->PrintAll();
 }
 
 float *Pooling2d::Backward(float *grads_down, bool del)

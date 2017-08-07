@@ -7,7 +7,12 @@ Session& Session::instance()
 
 void Session::update_workspace_size(size_t size)
 {
-    std::cout << "The last workspace size is " << workspace_ << "\n";
+    if(!have_workspace_)
+    {
+        checkCudaError(cudaMalloc(&workspace_, workspace_size_));
+        have_workspace_ = true;
+    }
+    std::cout << "The last workspace size is " << workspace_size_ << "\n";
     std::cout << "The current workspace size is " << size << "\n";
     if(workspace_size_ < size)
     {

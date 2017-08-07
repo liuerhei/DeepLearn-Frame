@@ -2,6 +2,7 @@
 #define TENSOR4D_H
 
 #include <iostream>
+#include <iomanip>
 #include "../wheel.h"
 #include "itensor.h"
 #include "cudnn.h"
