@@ -43,7 +43,7 @@ ITensor *Fc2d::LayerInit()
         this->p_weights_ = new Filter4d(K_, p_input_->C(), p_input_->H(), p_input_->W());
         std::cout << "Init weights here\n";
         p_weights_->PrintShape();
-        SetWeights(1.0f);
+        SetWeights(0.01f);
     }
 
     filterStrideA_[0] = 1;
@@ -111,7 +111,18 @@ float *Fc2d::Backward(float *down_grads, bool del)
         checkCudaError(cudaMalloc(&grads_weights_, sizeof(float) * p_weights_->Size()));
         checkCudaError(cudaMalloc(&grads_data_,    sizeof(float) * p_input_->Size()));
      }
-     return down_grads;
+     checkCudnn(cudnnConvolutionBackwardFilter(
+        Session::instance().cudnn_handle(), &alpha, p_input_->Desc(), p_input_->GpuPointer(),
+        p_output_->Desc(), down_grads, desc_, CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0,
+        Session::instance().workspace(), Session::instance().workspace_size(),&beta, p_weights_->Desc(), grads_weights_
+     ));
+     checkCudnn(cudnnConvolutionBackwardData(
+        Session::instance().cudnn_handle(), &alpha, p_weights_->Desc(), p_weights_->GpuPointer(),
+        p_output_->Desc(), down_grads, desc_, CUDNN_CONVOLUTION_BWD_DATA_ALGO_0,
+        Session::instance().workspace(), Session::instance().workspace_size(),
+        &beta, p_input_->Desc(), grads_data_
+     ));
+     return grads_data_;
 }
 
 void Fc2d::UpdateWeights()
@@ -119,6 +130,8 @@ void Fc2d::UpdateWeights()
      int size = p_weights_->Size();
      int K = p_weights_->K();
      Update<<<(size + 255) / 256, 256>>>(p_weights_->GpuPointer(), grads_weights_, size, size / K);
+     //p_weights_->SyncToCpu();
+     //p_weights_->PrintAll();
 }
 
 void Fc2d::SetWeights(float data)

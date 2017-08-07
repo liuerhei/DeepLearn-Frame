@@ -77,6 +77,16 @@ void Filter4d::SetValue(float val)
 void Filter4d::PrintK(int count) const
 {
     this->SyncToCpu();
+    for(int i = 0; i < count; ++i)
+    {
+        std::cout << h_data_[i] << "\t";
+    }
+    std::cout << "\n";
+}
+
+void Filter4d::PrintAll() const
+{
+    this->SyncToCpu();
     for(int i = 0; i < C_; ++i)
     {
         std::cout << "the" << i << "layer\n";
@@ -87,11 +97,6 @@ void Filter4d::PrintK(int count) const
         }
     }
     std::cout << "\n";
-}
-
-void Filter4d::PrintAll() const
-{
-    this->PrintK(this->size_);
 }
 
 void Filter4d::PrintShape() const
