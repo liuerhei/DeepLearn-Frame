@@ -13,8 +13,8 @@
 class Pooling2d : public IOperator
 {
 public:
-    //Pooling2d(int window, int stride, Padding_t pad = valid, cudnnPoolingMode_t mode = CUDNN_POOLING_AVERAGE_COUNT_EXCLUDE_PADDING);
-    Pooling2d(int window, int stride, Padding_t pad = valid, cudnnPoolingMode_t mode = CUDNN_POOLING_MAX);
+    Pooling2d(int window, int stride, Padding_t pad = valid, cudnnPoolingMode_t mode = CUDNN_POOLING_AVERAGE_COUNT_EXCLUDE_PADDING);
+    //Pooling2d(int window, int stride, Padding_t pad = valid, cudnnPoolingMode_t mode = CUDNN_POOLING_MAX);
     ~Pooling2d();
     void AddInput(ITensor *);
     ITensor *LayerInit();

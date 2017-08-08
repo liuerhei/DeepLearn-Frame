@@ -7,7 +7,8 @@ LDFLAGS = -arch=sm_35 -lcuda -lcudnn -lcublas
 
 # project
 #
-run: main.o wheel.o tensor/itensor.o operator/ioperator.o session.o 		\
+run: main.o wheel.o session.o loss.o					\
+	tensor/itensor.o operator/ioperator.o  				\
 	operator/conv2d.o operator/pooling2d.o operator/activation2d.o operator/softmax.o operator/fc2d.o		\
 	tensor/tensor4d.o tensor/filter4d.o
 	$(LD) $(LDFLAGS) -o $@ $^
@@ -17,6 +18,8 @@ run: main.o wheel.o tensor/itensor.o operator/ioperator.o session.o 		\
 operator/conv2d.o: operator/conv2d.cu 
 	 $(CXX) $(CXXFLAGS)   -c -o $@ $^
 operator/fc2d.o: operator/fc2d.cu 
+	 $(CXX) $(CXXFLAGS)   -c -o $@ $^
+loss.o: loss.cu
 	 $(CXX) $(CXXFLAGS)   -c -o $@ $^
 #
 # phony target
