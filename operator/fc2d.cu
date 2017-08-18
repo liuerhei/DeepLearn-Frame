@@ -34,6 +34,7 @@ Fc2d::~Fc2d()
 void Fc2d::AddInput(ITensor *input)
 {
     this->p_input_ = dynamic_cast<Tensor4d*>(input);
+    this->p_input_->PrintAll();
 }
 
 ITensor *Fc2d::LayerInit()
