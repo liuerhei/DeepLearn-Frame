@@ -18,6 +18,7 @@ public:
 
     void Randomize();
     void SetValue(float val);
+    void SetValue(float *data, size_t size);
     void PrintK(int k) const;
     void PrintAll() const;
     void PrintShape() const;

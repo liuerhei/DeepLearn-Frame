@@ -89,13 +89,6 @@ int main(void)
     std::cout << "=====>Pool2 Forward\n";
     pool2->Forward(false);
     
-    std::cout << "=====>Pool2 add input\n";
-    pool2->AddInput(conv2_out);
-    std::cout << "=====>Pool2 set weights\n";
-    pool2_out = pool2->LayerInit();
-    std::cout << "=====>Pool2 Forward\n";
-    pool2->Forward(false);
-
     std::cout << "=====>Activation add input\n";
     acti->AddInput(pool2_out);
     std::cout << "=====>Activation set weights\n";

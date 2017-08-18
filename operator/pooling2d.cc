@@ -25,7 +25,7 @@ Pooling2d::~Pooling2d()
 void Pooling2d::AddInput(ITensor *input)
 {
     this->p_input_ = dynamic_cast<Tensor4d*>(input);
-    this->p_input_->PrintAll();
+    //this->p_input_->PrintAll();
 }
 
 ITensor *Pooling2d::LayerInit()
@@ -68,7 +68,7 @@ void Pooling2d::Forward(bool del = false)
     //this->p_output_->PrintShape();
     this->p_output_->PrintShape();
     //this->p_output_->PrintK(10);
-    this->p_output_->PrintAll();
+    //this->p_output_->PrintAll();
 }
 
 float *Pooling2d::Backward(float *grads_down, bool del)

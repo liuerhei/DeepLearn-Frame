@@ -18,7 +18,7 @@ Softmax::~Softmax()
 void Softmax::AddInput(ITensor *input)
 {
     this->p_input_ = dynamic_cast<Tensor4d*>(input);
-    this->p_input_->PrintAll();
+    //this->p_input_->PrintAll();
 }
 
 ITensor *Softmax::LayerInit()

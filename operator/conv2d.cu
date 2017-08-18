@@ -45,7 +45,6 @@ void Conv2d::AddInput(ITensor *input)
 {
     this->p_input_ = dynamic_cast<Tensor4d*>(input);
     //this->p_input_->PrintK(10);
-    this->p_input_->PrintAll();
     // When backward complete, the input should be deleted
 }
 
@@ -56,7 +55,7 @@ ITensor *Conv2d::LayerInit()
         this->p_filter_ = new Filter4d(K_, p_input_->C(), S_, T_);
         std::cout << "Add new Filter here\n";
         p_filter_->PrintShape();
-        SetWeights(1);
+        SetWeights(0.01f);
         //p_filter_->PrintAll();
     }
     // Init the space and weights of filter.
@@ -131,7 +130,7 @@ void Conv2d::Forward(bool del = false)
         Session::instance().workspace(), Session::instance().workspace_size(),
         &beta, out->Desc(), out->GpuPointer() 
     ));
-    out->PrintAll();
+    //out->PrintAll();
     //checkCudnn(cudnnAddTensor(
     //    Session::instance().cudnn_handle(), &alpha, bias_->Desc(), bias_->GpuPointer(), &beta, out->Desc(), out->GpuPointer()
     //));

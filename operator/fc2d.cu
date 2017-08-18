@@ -34,7 +34,7 @@ Fc2d::~Fc2d()
 void Fc2d::AddInput(ITensor *input)
 {
     this->p_input_ = dynamic_cast<Tensor4d*>(input);
-    this->p_input_->PrintAll();
+    //this->p_input_->PrintAll();
 }
 
 ITensor *Fc2d::LayerInit()
@@ -102,7 +102,7 @@ void Fc2d::Forward(bool del)
         &beta, out->Desc(), out->GpuPointer()
     ));
     out->PrintShape();
-    out->PrintAll();
+    //out->PrintAll();
 }
 
 float *Fc2d::Backward(float *down_grads, bool del)

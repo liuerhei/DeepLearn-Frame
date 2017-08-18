@@ -75,6 +75,13 @@ void Tensor4d::SetValue(float val)
     this->SyncToGpu();
 }
 
+void Tensor4d::SetValue(float *data, size_t size)
+{
+    for(size_t i = 0; i < size; ++i)
+        h_data_[i] = data[i];
+    this->SyncToGpu();
+}
+
 void Tensor4d::PrintK(int count) const
 {
     this->SyncToCpu();
@@ -89,12 +96,14 @@ void Tensor4d::PrintAll() const
 {
     //this->PrintK(this->size_);
     this->SyncToCpu();
-    for(int i = 0; i < H_; ++i)
-    {
-        for(int j = 0; j < W_; ++j)
-              std::cout << std::setw(9) << h_data_[i * W_ + j] << "\t";
-        std::cout << "\n";
-    }
+    for(int i = 0; i < N_; ++i)
+        for(int j = 0; j < C_; ++j)
+            for(int i = 0; i < H_; ++i)
+            {
+                for(int j = 0; j < W_; ++j)
+                    std::cout << std::setw(9) << h_data_[i * W_ + j] << "\t";
+                std::cout << "\n";
+            }
 }
 
 
