@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include "wheel.h"
 #include "session.h"
 #include "tensor/tensor4d.h"
 #include "readubyte.h"
@@ -20,9 +21,9 @@ __global__ void loss(const float *Label, int NumLabel, int Batchsize, float *Los
 int main(void)
 {
     size_t width, height;
-    std::cout << "Reading MNIST data\n";
-    const char kImage_dir[] = "../mnist/train-images-idx3-ubyte";
-    const char kLabel_dir[] = "../mnist/train-labels-idx1-ubyte";
+    log_ok("Reading MNIST data");
+    const char kImage_dir[] = "../MNIST_DATA/train-images-idx3-ubyte";
+    const char kLabel_dir[] = "../MNIST_DATA/train-labels-idx1-ubyte";
     const int  kChannel     = 1;
     const int  kBatchsize   = 10;
     size_t train_size = ReadUByteDataset(kImage_dir, kLabel_dir, nullptr, nullptr, width, height);
@@ -36,7 +37,7 @@ int main(void)
         train_image_float[i] = (float)train_image[i] / 255.0f;
     for(size_t i = 0; i < train_size; ++i)
         train_label_float[i] = (float)train_label[i];
-    std::cout << "Data success\n";
+    log_ok("Data success");
 
     checkCudaError(cudaSetDevice(0));
 
@@ -63,93 +64,92 @@ int main(void)
     b->SetValue(&train_label_float[0], kBatchsize);
     input = a;
 
-    std::cout << "=====>Conv1 add input\n";
+    log_info("Conv1 add input");
     conv1->AddInput(input);
-    std::cout << "=====>Conv1 set weights\n";
+    log_info("Conv1 set weights");
     conv1_out = conv1->LayerInit();
-    std::cout << "=====>Conv1 Forward\n";
+    log_info("Conv1 Forward");
     conv1->Forward(false);
     
-    std::cout << "=====>Pool1 add input\n";
+    log_info("Pool1 add input");
     pool1->AddInput(conv1_out);
-    std::cout << "=====>Pool1 set weights\n";
+    log_info("Pool1 set weights");
     pool1_out = pool1->LayerInit();
-    std::cout << "=====>Pool1 Forward\n";
+    log_info("Pool1 Forward");
     pool1->Forward(false);
 
-    std::cout << "=====>Conv2 add input\n";
+    log_info("Conv2 add input");
     conv2->AddInput(pool1_out);
-    std::cout << "=====>Conv2 set weights\n";
+    log_info("Conv2 set weights");
     conv2_out = conv2->LayerInit();
-    std::cout << "=====>Conv2 Forward\n";
+    log_info("Conv2 Forward");
     conv2->Forward(false);
 
-    std::cout << "=====>Pool2 add input\n";
+    log_info("Pool2 add input");
     pool2->AddInput(conv2_out);
-    std::cout << "=====>Pool2 set weights\n";
+    log_info("Pool2 set weights");
     pool2_out = pool2->LayerInit();
-    std::cout << "=====>Pool2 Forward\n";
+    log_info("Pool2 Forward");
     pool2->Forward(false);
 
 
-    std::cout << "=====>Fc1 add input\n";
+    log_info("Fc1 add input");
     fc1->AddInput(pool2_out);
-    std::cout << "=====>Fc1 set weights\n";
+    log_info("Fc1 set weights");
     fc1_out = fc1->LayerInit();
-    std::cout << "=====>Fc1 Forward\n";
+    log_info("Fc1 Forward");
     fc1->Forward(false);
 
-    std::cout << "=====>Fc2 add input\n";
+    log_info("Fc2 add input");
     fc2->AddInput(fc1_out);
-    std::cout << "=====>Fc2 set weights\n";
+    log_info("Fc2 set weights");
     fc2_out = fc2->LayerInit();
-    std::cout << "=====>Fc2 Forward\n";
+    log_info("Fc2 Forward");
     fc2->Forward(false);
 
-    std::cout << "=====>Softmax add input\n";
+    log_info("Softmax add input");
     soft->AddInput(fc2_out);
-    std::cout << "=====>Softmax set weights\n";
+    log_info("Softmax set weights");
     soft_out = soft->LayerInit();
     soft_out->PrintShape();
-    std::cout << "=====>Softmac Forward\n";
+    log_info("Softmac Forward");
     soft->Forward(false);
-    std::cout << "=====>Forward Operation has done!\n";
-    std::cout << "=====>Now begin to Backward\n";
+    log_info("Forward Operation has done!");
+    log_info("Now begin to Backward");
 
     float *grads_soft;
     float *grads_fc1,   *grads_fc2;
     float *grads_pool1, *grads_pool2;
     float *grads_conv1, *grads_conv2;
 
-    std::cout << "-----------------------------\n";
     loss<<<1, 100>>>(b->GpuPointer(), 10, kBatchsize, dynamic_cast<Tensor4d*>(soft_out)->GpuPointer());
-    std::cout << "Compute Complete\n";
+    log_info("Compute Complete");
     // The loss function just reduce the current label location by step 1
     grads_soft = soft->Backward(dynamic_cast<Tensor4d*>(soft_out)->GpuPointer(), false);
-    std::cout << "Softmax Backward success\n";
+    log_info("Softmax Backward success");
 
     grads_fc2  = fc2->Backward(grads_soft, false);
     fc2->UpdateWeights();
-    std::cout << "Fc2 Backward success\n";
+    log_info("Fc2 Backward success");
     
     grads_fc1  = fc1->Backward(grads_fc2, false);
     fc1->UpdateWeights();
-    std::cout << "Fc1 Backward success\n";
+    log_info("Fc1 Backward success");
 
     grads_pool2 = pool2->Backward(grads_fc1, false);
-    std::cout << "Pooling2 Backward success\n";
+    log_info("Pooling2 Backward success");
 
     grads_conv2 = conv2->Backward(grads_pool2, false);
     conv2->UpdateWeights();
-    std::cout << "Conv2 Backward success\n";
+    log_info("Conv2 Backward success");
 
     grads_pool1 = pool1->Backward(grads_conv2, false);
-    std::cout << "Pooling1 Backward success\n";
+    log_info("Pooling1 Backward success");
 
     grads_conv1 = conv1->Backward(grads_pool1, false);
     conv1->UpdateWeights();
-    std::cout << "Conv1 Backward success\n";
-    std::cout << "Backward Operation has done\n";
+    log_info("Conv1 Backward success");
+    log_info("Backward Operation has done");
 
     return 0;
 }

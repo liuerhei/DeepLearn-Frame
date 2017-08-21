@@ -1,6 +1,10 @@
 #include <iostream>
 #include <sstream>
 
+#define RESET       "\033[0m"
+#define GREEN       "\033[32m"
+#define CYAN        "\033[36m"
+#define YELLOW      "\033[33m"
 #define FatalError(s) do{                                              \
     std::stringstream _where, _message;                                \
     _where << __FILE__ << ':' << __LINE__;                             \
@@ -26,4 +30,7 @@
     }                                                                  \
 } while(0)
 
-
+#define log_ok(x) do{std::cerr << GREEN << "[Ok] " << x << " @" << __FILE__ << ":" << __LINE__ << RESET << std::endl;}while(false)
+#define log_info(x) do{std::cerr << CYAN << "[Info] " << x << " @" << __FILE__ << ":" << __LINE__ << RESET << std::endl;}while(false)
+#define log_func() do{std::cerr << CYAN << "[Function] " << __PRETTY_FUNCTION__ << RESET << std::endl;}while(false)
+#define log_warning(x) do{std::cerr << YELLOW << "[Warning] " << x << " @" << __FILE__ << ":" << __LINE__ << RESET << std::endl;}while(false)

@@ -115,6 +115,15 @@ float *Fc2d::Backward(float *down_grads, bool del)
      }
      p_weights_->PrintShape();
      std::cout << p_weights_->GpuPointer() << "\n";
+     checkCudnn(cudnnGetConvolutionBackwardFilterAlgorithm(
+        Session::instance().cudnn_handle(), p_input_->Desc(), p_output_->Desc(), 
+        desc_, p_weights_->Desc(), CUDNN_CONVOLUTION_BWD_FILTER_PREFER_FASTEST, 0, &bwdalgo_
+     ));
+     checkCudnn(cudnnGetConvolutionBackwardFilterWorkspaceSize(
+        Session::instance().cudnn_handle(), p_input_->Desc(), p_output_->Desc(),
+        desc_, p_weights_->Desc(), bwdalgo_, &size_in_bytes
+     ));
+     Session::instance().update_workspace_size(size_in_bytes);
      checkCudnn(cudnnConvolutionBackwardFilter(
         Session::instance().cudnn_handle(), &alpha, p_input_->Desc(), p_input_->GpuPointer(),
         p_output_->Desc(), down_grads, desc_, CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0,

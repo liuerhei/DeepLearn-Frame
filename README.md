@@ -13,3 +13,5 @@ The above error is due to not allocate workspace for convolution especially when
 And up to now, the fully connection have done, but the softmax still has some problem.                                                   --2017-08-07
 Now the main.cpp is a file to test the result of fc2d. Up to now, when weights is int, the result is right, but when the weights is float, for example 0.01, the result is wrong. Need to find the reason. And the old main.cpp is the main.cpp.back now.                                                        --2017-08-18
 Now have a new question, when training 10 images, the softmax output are all 0.1. This need to fix.                                      --2017-08-18
+
+Now the fc2d Backward has a problem, and add the filter backward workspace update. Up to now, the data workspace don't need add.         --2017-08-21

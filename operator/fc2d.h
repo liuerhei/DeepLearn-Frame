@@ -31,6 +31,7 @@ private:
     int filationA_[2];
     cudnnConvolutionDescriptor_t desc_;
     cudnnConvolutionFwdAlgo_t algo_;
+    cudnnConvolutionBwdFilterAlgo_t bwdalgo_;
     Tensor4d *p_input_;
     Tensor4d *p_output_;
     Filter4d *p_weights_;
