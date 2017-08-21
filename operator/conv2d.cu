@@ -130,7 +130,6 @@ void Conv2d::Forward(bool del = false)
         Session::instance().workspace(), Session::instance().workspace_size(),
         &beta, out->Desc(), out->GpuPointer() 
     ));
-    //out->PrintAll();
     //checkCudnn(cudnnAddTensor(
     //    Session::instance().cudnn_handle(), &alpha, bias_->Desc(), bias_->GpuPointer(), &beta, out->Desc(), out->GpuPointer()
     //));

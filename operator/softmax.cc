@@ -18,6 +18,7 @@ Softmax::~Softmax()
 void Softmax::AddInput(ITensor *input)
 {
     this->p_input_ = dynamic_cast<Tensor4d*>(input);
+    //this->p_input_->PrintK(10);
     //this->p_input_->PrintAll();
 }
 
@@ -37,7 +38,8 @@ void Softmax::Forward(bool del = false)
         Session::instance().cudnn_handle(), algo_, mode_, &alpha, p_input_->Desc(), p_input_->GpuPointer(), 
         &beta, p_output_->Desc(), p_output_->GpuPointer()
     ));
-    p_output_->PrintAll();
+    //p_output_->PrintAll();
+    p_output_->PrintK(10);
 }
 
 float *Softmax::Backward(float *grads_down, bool del)

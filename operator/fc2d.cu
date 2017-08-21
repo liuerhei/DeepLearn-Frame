@@ -94,6 +94,7 @@ void Fc2d::Forward(bool del)
 {
     Tensor4d *out = dynamic_cast<Tensor4d*>(p_output_);
     std::cout << p_input_->Desc() << ' ' << p_weights_->Desc() << ' ' << desc_ << ' ' << ' ' << out->Desc()<< "\n";
+    std::cout << p_weights_->GpuPointer() << "\n";
     //p_weights_->PrintAll();
     checkCudnn(cudnnConvolutionForward(
         Session::instance().cudnn_handle(), &alpha, p_input_->Desc(), p_input_->GpuPointer(),
@@ -112,10 +113,12 @@ float *Fc2d::Backward(float *down_grads, bool del)
         checkCudaError(cudaMalloc(&grads_weights_, sizeof(float) * p_weights_->Size()));
         checkCudaError(cudaMalloc(&grads_data_,    sizeof(float) * p_input_->Size()));
      }
+     p_weights_->PrintShape();
+     std::cout << p_weights_->GpuPointer() << "\n";
      checkCudnn(cudnnConvolutionBackwardFilter(
         Session::instance().cudnn_handle(), &alpha, p_input_->Desc(), p_input_->GpuPointer(),
         p_output_->Desc(), down_grads, desc_, CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0,
-        Session::instance().workspace(), Session::instance().workspace_size(),&beta, p_weights_->Desc(), grads_weights_
+        Session::instance().workspace(), Session::instance().workspace_size(), &beta, p_weights_->Desc(), grads_weights_
      ));
      checkCudnn(cudnnConvolutionBackwardData(
         Session::instance().cudnn_handle(), &alpha, p_weights_->Desc(), p_weights_->GpuPointer(),

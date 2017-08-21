@@ -25,6 +25,7 @@ Pooling2d::~Pooling2d()
 void Pooling2d::AddInput(ITensor *input)
 {
     this->p_input_ = dynamic_cast<Tensor4d*>(input);
+    //this->p_input_->PrintK(10);
     //this->p_input_->PrintAll();
 }
 
