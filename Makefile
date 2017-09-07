@@ -10,6 +10,7 @@ LDFLAGS = -arch=sm_35 -lcuda -lcudnn -lcublas
 run: main.o wheel.o session.o loss.o					\
 	tensor/itensor.o operator/ioperator.o  				\
 	operator/conv2d.o operator/pooling2d.o operator/activation2d.o operator/softmax.o operator/fc2d.o		\
+	operator/fc2d_test.o												\
 	tensor/tensor4d.o tensor/filter4d.o                                                                             \
 	readubyte.o
 	$(LD) $(LDFLAGS) -o $@ $^

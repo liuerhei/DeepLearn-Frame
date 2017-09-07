@@ -9,6 +9,7 @@
 #include "operator/activation2d.h"
 #include "operator/softmax.h"
 #include "operator/fc2d.h"
+#include "operator/fc2d_test.h"
 
 __global__ void loss(const float *Label, int NumLabel, int Batchsize, float *LossData)
 {
@@ -20,6 +21,7 @@ __global__ void loss(const float *Label, int NumLabel, int Batchsize, float *Los
 
 int main(void)
 {
+        /*
     size_t width, height;
     log_ok("Reading MNIST data");
     const char kImage_dir[] = "../MNIST_DATA/train-images-idx3-ubyte";
@@ -39,21 +41,23 @@ int main(void)
         train_label_float[i] = (float)train_label[i];
     log_ok("Data success");
 
-    checkCudaError(cudaSetDevice(0));
+    checkCudaError(cudaSetDevice(1));
 
     ITensor *input      = nullptr;
     ITensor *conv1_out  = nullptr;
     ITensor *pool1_out  = nullptr;
     ITensor *conv2_out  = nullptr;
     ITensor *pool2_out  = nullptr;
-    ITensor *fc1_out    = nullptr;
-    ITensor *fc2_out    = nullptr;
+    ITensor *fc_out     = nullptr;
     ITensor *soft_out   = nullptr;
 
     Conv2d    *conv1    = new Conv2d(32, 5, 5);
     Pooling2d *pool1    = new Pooling2d(2, 2);
     Conv2d    *conv2    = new Conv2d(64, 5, 5);
     Pooling2d *pool2    = new Pooling2d(2, 2);
+    Fc2d_test *fc       = new Fc2d_test(10);
+    //Conv2d    *fc1      = new Conv2d(10, 4, 4);
+    //Conv2d    *fc2      = new Conv2d(10, 1, 1);
     Fc2d      *fc1      = new Fc2d(1024);
     Fc2d      *fc2      = new Fc2d(10);
     Softmax   *soft     = new Softmax();
@@ -92,33 +96,25 @@ int main(void)
     log_info("Pool2 Forward");
     pool2->Forward(false);
 
-
-    log_info("Fc1 add input");
-    fc1->AddInput(pool2_out);
-    log_info("Fc1 set weights");
-    fc1_out = fc1->LayerInit();
-    log_info("Fc1 Forward");
-    fc1->Forward(false);
-
-    log_info("Fc2 add input");
-    fc2->AddInput(fc1_out);
-    log_info("Fc2 set weights");
-    fc2_out = fc2->LayerInit();
-    log_info("Fc2 Forward");
-    fc2->Forward(false);
+    log_info("Fc add input");
+    fc->AddInput(pool2_out);
+    log_info("Fc set weights");
+    fc_out = fc->LayerInit();
+    log_info("Fc Forward");
+    fc->Forward(false);
 
     log_info("Softmax add input");
-    soft->AddInput(fc2_out);
+    soft->AddInput(fc_out);
     log_info("Softmax set weights");
     soft_out = soft->LayerInit();
-    soft_out->PrintShape();
     log_info("Softmac Forward");
     soft->Forward(false);
     log_info("Forward Operation has done!");
     log_info("Now begin to Backward");
 
     float *grads_soft;
-    float *grads_fc1,   *grads_fc2;
+    float *grads_fc;
+    //float *grads_fc1,   *grads_fc2;
     float *grads_pool1, *grads_pool2;
     float *grads_conv1, *grads_conv2;
 
@@ -128,15 +124,19 @@ int main(void)
     grads_soft = soft->Backward(dynamic_cast<Tensor4d*>(soft_out)->GpuPointer(), false);
     log_info("Softmax Backward success");
 
-    grads_fc2  = fc2->Backward(grads_soft, false);
-    fc2->UpdateWeights();
-    log_info("Fc2 Backward success");
-    
-    grads_fc1  = fc1->Backward(grads_fc2, false);
-    fc1->UpdateWeights();
-    log_info("Fc1 Backward success");
+    //grads_fc2  = fc2->Backward(grads_soft, false);
+    //fc2->UpdateWeights();
+    //log_info("Fc2 Backward success");
+    //
+    //grads_fc1  = fc1->Backward(grads_fc2, false);
+    //fc1->UpdateWeights();
+    //log_info("Fc1 Backward success");
 
-    grads_pool2 = pool2->Backward(grads_fc1, false);
+    grads_fc = fc->Backward(grads_soft, false);
+    fc->UpdateWeights();
+    log_info("Fc Backward success");
+
+    grads_pool2 = pool2->Backward(grads_fc, false);
     log_info("Pooling2 Backward success");
 
     grads_conv2 = conv2->Backward(grads_pool2, false);
@@ -151,5 +151,15 @@ int main(void)
     log_info("Conv1 Backward success");
     log_info("Backward Operation has done");
 
+    */
+    Fc2d_test *fc = new Fc2d_test(10);
+    Tensor4d *a = new Tensor4d(2, 1, 10, 10);
+    ITensor *input = nullptr;
+
+    a->SetValue(1.0f);
+    input = a;
+    fc->AddInput(input);
+    fc->LayerInit();
+    fc->Forward(false);
     return 0;
 }

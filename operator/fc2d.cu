@@ -94,7 +94,7 @@ void Fc2d::Forward(bool del)
 {
     Tensor4d *out = dynamic_cast<Tensor4d*>(p_output_);
     std::cout << p_input_->Desc() << ' ' << p_weights_->Desc() << ' ' << desc_ << ' ' << ' ' << out->Desc()<< "\n";
-    std::cout << p_weights_->GpuPointer() << "\n";
+    //std::cout << p_weights_->GpuPointer() << "\n";
     //p_weights_->PrintAll();
     checkCudnn(cudnnConvolutionForward(
         Session::instance().cudnn_handle(), &alpha, p_input_->Desc(), p_input_->GpuPointer(),
@@ -103,7 +103,7 @@ void Fc2d::Forward(bool del)
         &beta, out->Desc(), out->GpuPointer()
     ));
     out->PrintShape();
-    //out->PrintAll();
+    out->PrintK(10);
 }
 
 float *Fc2d::Backward(float *down_grads, bool del)

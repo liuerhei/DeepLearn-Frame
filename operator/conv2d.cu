@@ -123,7 +123,6 @@ ITensor *Conv2d::LayerInit()
 void Conv2d::Forward(bool del = false)
 {
     Tensor4d *out = dynamic_cast<Tensor4d*>(p_output_);
-    std::cout << "Work space size is: " << Session::instance().workspace() << "\n";
     checkCudnn(cudnnConvolutionForward(
         Session::instance().cudnn_handle(), &alpha, p_input_->Desc(), p_input_->GpuPointer(),
         p_filter_->Desc(), p_filter_->GpuPointer(), desc_, algo_, 
@@ -147,6 +146,10 @@ float *Conv2d::Backward(float *down_grads, bool del = false)
      // TODO
      // Here maybe have BUG
      // Because the size of each layer make sence, so the space can allocate once.
+     //checkCudnn(cudnnConvolutionBackwardBias(
+     //     Session::instance().cudnn_handle(), &alpha, p_output_->Desc(),
+     //     down_grads, &beta, bias_->Desc(), bias_->GpuPointer()
+     //));
      checkCudnn(cudnnConvolutionBackwardFilter(
           Session::instance().cudnn_handle(), &alpha, p_input_->Desc(), p_input_->GpuPointer(),
           p_output_->Desc(), down_grads, desc_, CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0,

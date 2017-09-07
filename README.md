@@ -15,3 +15,5 @@ Now the main.cpp is a file to test the result of fc2d. Up to now, when weights i
 Now have a new question, when training 10 images, the softmax output are all 0.1. This need to fix.                                      --2017-08-18
 
 Now the fc2d Backward has a problem, and add the filter backward workspace update. Up to now, the data workspace don't need add.         --2017-08-21
+
+Use cublasSgemm to compute the fully connection layer. Bue there is a problem that when weights is setted 0.01, the result was wrong.    --2017-09-07

@@ -18,8 +18,6 @@ Softmax::~Softmax()
 void Softmax::AddInput(ITensor *input)
 {
     this->p_input_ = dynamic_cast<Tensor4d*>(input);
-    //this->p_input_->PrintK(10);
-    //this->p_input_->PrintAll();
 }
 
 ITensor *Softmax::LayerInit()
@@ -38,7 +36,6 @@ void Softmax::Forward(bool del = false)
         Session::instance().cudnn_handle(), algo_, mode_, &alpha, p_input_->Desc(), p_input_->GpuPointer(), 
         &beta, p_output_->Desc(), p_output_->GpuPointer()
     ));
-    //p_output_->PrintAll();
     p_output_->PrintK(10);
 }
 
@@ -49,8 +46,9 @@ float *Softmax::Backward(float *grads_down, bool del)
         checkCudaError(cudaMalloc(&this->grads_input_, sizeof(float) * p_input_->Size()));
      }
      checkCudnn(cudnnSoftmaxBackward(
-        Session::instance().cudnn_handle(), algo_, mode_, &alpha, p_output_->Desc(), p_output_->GpuPointer(), p_output_->Desc(), grads_down, 
-        &beta, p_input_->Desc(), grads_input_));
+        Session::instance().cudnn_handle(), algo_, mode_, &alpha, p_output_->Desc(), p_output_->GpuPointer(), 
+        p_output_->Desc(), grads_down, &beta, p_input_->Desc(), grads_input_
+     ));
 
      return grads_input_;
 }
