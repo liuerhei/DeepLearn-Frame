@@ -29,7 +29,7 @@ Tensor4d::Tensor4d(const Tensor4d &m)
 {
     this->h_data_ = (float*)malloc(this->size_ * sizeof(float));
     checkCudaError(cudaMalloc(&d_data_, this->size_ * sizeof(float)));
-    checkCudaError(cudaMemcpy(d_data_, m.GpuPointer(), this->size_ * sizeof(float), cudaMemcpyDeviceToDevice));
+    checkCudaError(cudaMemcpyAsync(d_data_, m.GpuPointer(), this->size_ * sizeof(float), cudaMemcpyDeviceToDevice));
     checkCudnn(cudnnCreateTensorDescriptor(&desc_));
     checkCudnn(cudnnSetTensor4dDescriptor(desc_, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, N_, C_, H_, W_));
 }
@@ -48,7 +48,7 @@ Tensor4d& Tensor4d::operator=(const Tensor4d &m)
 
     this->h_data_ = (float*)malloc(this->size_ * sizeof(float));
     checkCudaError(cudaMalloc(&d_data_, this->size_ * sizeof(float)));
-    checkCudaError(cudaMemcpy(d_data_, m.GpuPointer(), this->size_ * sizeof(float), cudaMemcpyDeviceToDevice));
+    checkCudaError(cudaMemcpyAsync(d_data_, m.GpuPointer(), this->size_ * sizeof(float), cudaMemcpyDeviceToDevice));
     checkCudnn(cudnnCreateTensorDescriptor(&desc_));
     checkCudnn(cudnnSetTensor4dDescriptor(desc_, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, N_, C_, H_, W_));
     return *this;
@@ -63,7 +63,8 @@ void Tensor4d::Randomize()
 {
     for(int i = 0; i < this->size_; i++)
     {
-        h_data_[i] = (rand() - RAND_MAX / 2) / (10.0 * RAND_MAX);
+        //h_data_[i] = (rand() - RAND_MAX / 2) / (10.0 * RAND_MAX);
+        h_data_[i] = rand() / (100.0 * RAND_MAX);
     }
     this->SyncToGpu();
 }
@@ -122,10 +123,10 @@ float* Tensor4d::CpuPointer() const
     return this->h_data_;
 }
 
-float *Tensor4d::GpuPointer()
-{
-    return this->d_data_;
-}
+//float *Tensor4d::GpuPointer()
+//{
+//    return this->d_data_;
+//}
 
 int Tensor4d::N() const
 {
@@ -154,12 +155,12 @@ int Tensor4d::Size() const
 
 void Tensor4d::SyncToCpu() const
 {
-    checkCudaError(cudaMemcpy(this->h_data_, this->d_data_, this->size_ * sizeof(float), cudaMemcpyDeviceToHost));
+    checkCudaError(cudaMemcpyAsync(this->h_data_, this->d_data_, this->size_ * sizeof(float), cudaMemcpyDeviceToHost));
 }
 
 void Tensor4d::SyncToGpu() const
 {
-    checkCudaError(cudaMemcpy(this->d_data_, this->h_data_, this->size_ * sizeof(float), cudaMemcpyHostToDevice));
+    checkCudaError(cudaMemcpyAsync(this->d_data_, this->h_data_, this->size_ * sizeof(float), cudaMemcpyHostToDevice));
 }
 
 cudnnTensorDescriptor_t Tensor4d::Desc() const

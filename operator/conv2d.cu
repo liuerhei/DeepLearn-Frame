@@ -32,7 +32,8 @@ Conv2d::~Conv2d()
     delete bias_;
     free(grads_data_);
     free(grads_filter_);
-    //free(grads_bias_);
+    free(grads_bias_);
+    std::cout << "Conv layer delete\n";
     /*
      * TODO
      * when the function will be called ?
@@ -44,7 +45,6 @@ Conv2d::~Conv2d()
 void Conv2d::AddInput(ITensor *input)
 {
     this->p_input_ = dynamic_cast<Tensor4d*>(input);
-    //this->p_input_->PrintK(10);
     // When backward complete, the input should be deleted
 }
 
@@ -55,9 +55,11 @@ ITensor *Conv2d::LayerInit()
         this->p_filter_ = new Filter4d(K_, p_input_->C(), S_, T_);
         std::cout << "Add new Filter here\n";
         p_filter_->PrintShape();
-        SetWeights(0.01f);
-        //p_filter_->PrintAll();
+        //SetWeights(0.01f);
+        p_filter_->Randomize();
+        p_filter_->PrintK(100);
     }
+    std::cout << "1\n";
     // Init the space and weights of filter.
     
     int h = p_input_->H();
@@ -80,10 +82,6 @@ ITensor *Conv2d::LayerInit()
         W_out = w / filterStrideA_[1] + w % filterStrideA_[1];
     }
     checkCudnn(cudnnCreateConvolutionDescriptor(&desc_));
-    //checkCudnn(cudnnSetConvolution2dDescriptor(
-    //    desc_, padA_[0], padA_[1], filterStrideA_[0], filterStrideA_[1],
-    //    dilationA_[0], dilationA_[1], CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT
-    //));
     checkCudnn(cudnnSetConvolutionNdDescriptor(
         desc_, 2, padA_, filterStrideA_, dilationA_,
         CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT
@@ -104,11 +102,32 @@ ITensor *Conv2d::LayerInit()
             Session::instance().cudnn_handle(), p_input_->Desc(), p_filter_->Desc(), desc_,
             out->Desc(), CUDNN_CONVOLUTION_FWD_PREFER_FASTEST, 0, &algo_
         ));
-        std::cout << algo_ << "\n";
         checkCudnn(cudnnGetConvolutionForwardWorkspaceSize(
             Session::instance().cudnn_handle(), p_input_->Desc(), p_filter_->Desc(), desc_,
             out->Desc(), algo_, &size_in_bytes
         ));
+        // compute the filter backward workspace size
+        size_t fsize_bytes, dsize_bytes;
+        checkCudnn(cudnnGetConvolutionBackwardFilterAlgorithm(
+            Session::instance().cudnn_handle(), p_input_->Desc(), p_output_->Desc(), desc_,
+            p_filter_->Desc(), CUDNN_CONVOLUTION_BWD_FILTER_PREFER_FASTEST, 0, &falgo_
+        ));
+        checkCudnn(cudnnGetConvolutionBackwardFilterWorkspaceSize(
+            Session::instance().cudnn_handle(), p_input_->Desc(), p_output_->Desc(), desc_,
+            p_filter_->Desc(), falgo_, &fsize_bytes
+        ));
+        // compute the data backward workspace size
+        checkCudnn(cudnnGetConvolutionBackwardDataAlgorithm(
+            Session::instance().cudnn_handle(), p_filter_->Desc(), p_output_->Desc(), desc_,
+            p_input_->Desc(), CUDNN_CONVOLUTION_BWD_DATA_PREFER_FASTEST, 0, &dalgo_
+        ));
+        checkCudnn(cudnnGetConvolutionBackwardDataWorkspaceSize(
+            Session::instance().cudnn_handle(), p_filter_->Desc(), p_output_->Desc(), desc_,
+            p_input_->Desc(), dalgo_, &dsize_bytes
+        ));
+        size_in_bytes = (size_in_bytes > fsize_bytes) ? size_in_bytes : fsize_bytes;
+        size_in_bytes = (size_in_bytes > dsize_bytes) ? size_in_bytes : dsize_bytes;
+
         Session::instance().update_workspace_size(size_in_bytes);
     }
 
@@ -132,7 +151,7 @@ void Conv2d::Forward(bool del = false)
     //checkCudnn(cudnnAddTensor(
     //    Session::instance().cudnn_handle(), &alpha, bias_->Desc(), bias_->GpuPointer(), &beta, out->Desc(), out->GpuPointer()
     //));
-    //out->PrintAll();
+    out->PrintK(10);
 }
 
 float *Conv2d::Backward(float *down_grads, bool del = false)
@@ -167,27 +186,24 @@ float *Conv2d::Backward(float *down_grads, bool del = false)
       * when should the input and output tensor delete after backward complete ?
       */
 
-     /*
-     float *a = (float *)malloc(sizeof(float) * p_filter_->Size());
-     checkCudaError(cudaMemcpy(a, grads_filter_, sizeof(float) * p_filter_->Size(), cudaMemcpyDeviceToHost));
-     std::cout << "conv filter gradients\n";
-     for(int i = 0; i < p_filter_->Size(); ++i)
-        std::cout << a[i] << ' ';
-     //   a[i] = i;
-     //checkCudaError(cudaMemcpy(grads_filter_, a, sizeof(float) * p_filter_->Size(), cudaMemcpyHostToDevice));
-     // This is a test, it seems that the gradients always is 0
-     std::cout << "\n";
+     //float *a = (float *)malloc(sizeof(float) * p_filter_->Size());
+     //checkCudaError(cudaMemcpy(a, grads_filter_, sizeof(float) * p_filter_->Size(), cudaMemcpyDeviceToHost));
+     //std::cout << "conv filter gradients\n";
+     //for(int i = 0; i < p_filter_->Size(); ++i)
+     //   std::cout << a[i] << ' ';
+     ////   a[i] = i;
+     ////checkCudaError(cudaMemcpy(grads_filter_, a, sizeof(float) * p_filter_->Size(), cudaMemcpyHostToDevice));
+     //// This is a test, it seems that the gradients always is 0
+     //std::cout << "\n";
 
-     float *b = (float *)malloc(sizeof(float) * p_input_->Size());
-     checkCudaError(cudaMemcpy(a, grads_data_,  sizeof(float) * p_input_->Size(),   cudaMemcpyDeviceToHost));
-     std::cout << "conv data gradients\n";
-     for(int i = 0; i < p_input_->Size(); ++i)
-        std::cout << b[i] << ' ';
-     std::cout << "\n";
+     //float *b = (float *)malloc(sizeof(float) * p_input_->Size());
+     //checkCudaError(cudaMemcpy(a, grads_data_,  sizeof(float) * p_input_->Size(),   cudaMemcpyDeviceToHost));
+     //std::cout << "conv data gradients\n";
+     //for(int i = 0; i < p_input_->Size(); ++i)
+     //   std::cout << b[i] << ' ';
+     //std::cout << "\n";
      //free(a);
      //free(b);
-     */
-
      return grads_data_;
 }
 
@@ -196,10 +212,27 @@ void Conv2d::UpdateWeights()
     int size = p_filter_->Size();
     int K = p_filter_->K();
     DUpdate<<<(size + 255) / 256, 256>>>(p_filter_->GpuPointer(), grads_filter_, size, size / K);
+    //p_filter_->PrintK(10);
 }
 
 void Conv2d::SetWeights(float data)
 {
     p_filter_->SetValue(data);
     // p_filter_->randomize();
+}
+
+void Conv2d::ToFile(const char *fileprefix)
+{
+    std::stringstream ssf;
+    ssf << fileprefix << ".bin";
+
+    FILE *fp = fopen(ssf.str().c_str(), "w+");
+    if(!fp)
+    {
+        log_error("FILE cannot open");
+        exit(0);
+    }
+    //this->p_filter_->SyncToCpu();
+    fwrite(this->p_filter_->CpuPointer(), sizeof(float), this->p_filter_->Size(), fp);
+    fclose(fp);
 }

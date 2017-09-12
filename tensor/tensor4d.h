@@ -11,8 +11,8 @@ class Tensor4d : public ITensor
 {
 public:
     Tensor4d(int n, int c, int h, int w);
-    ~Tensor4d();
     Tensor4d(const Tensor4d&m);
+    ~Tensor4d();
     Tensor4d& operator=(const Tensor4d& m);
     bool operator==(const Tensor4d& m);
 
@@ -22,11 +22,12 @@ public:
     void PrintK(int k) const;
     void PrintAll() const;
     void PrintShape() const;
-    float* GpuPointer() const;
-    float* CpuPointer() const;
-    float* GpuPointer();
     void SyncToCpu() const;
     void SyncToGpu() const;
+
+    float* GpuPointer() const;
+    float* CpuPointer() const;
+    //float* GpuPointer();
 
     int N() const;
     int C() const;

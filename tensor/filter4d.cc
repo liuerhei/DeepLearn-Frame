@@ -28,7 +28,7 @@ Filter4d::Filter4d(const Filter4d &m)
 {
     this->h_data_ = (float*)malloc(this->size_ * sizeof(float));
     checkCudaError(cudaMalloc(&d_data_, this->size_ * sizeof(float)));
-    checkCudaError(cudaMemcpy(d_data_, m.GpuPointer(), this->size_ * sizeof(float), cudaMemcpyDeviceToDevice));
+    checkCudaError(cudaMemcpyAsync(d_data_, m.GpuPointer(), this->size_ * sizeof(float), cudaMemcpyDeviceToDevice));
     checkCudnn(cudnnCreateFilterDescriptor(&desc_));
     checkCudnn(cudnnSetFilter4dDescriptor(desc_, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW, K_, C_, R_, S_));
 }
@@ -47,7 +47,7 @@ Filter4d& Filter4d::operator=(const Filter4d &m)
 
     this->h_data_ = (float*)malloc(this->size_ * sizeof(float));
     checkCudaError(cudaMalloc(&d_data_, this->size_ * sizeof(float)));
-    checkCudaError(cudaMemcpy(d_data_, m.GpuPointer(), this->size_ * sizeof(float), cudaMemcpyDeviceToDevice));
+    checkCudaError(cudaMemcpyAsync(d_data_, m.GpuPointer(), this->size_ * sizeof(float), cudaMemcpyDeviceToDevice));
     checkCudnn(cudnnCreateFilterDescriptor(&desc_));
     checkCudnn(cudnnSetFilter4dDescriptor(desc_, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW, K_, C_, R_, S_));
     return *this;
@@ -62,7 +62,8 @@ void Filter4d::Randomize()
 {
     for(int i = 0; i < this->size_; i++)
     {
-        d_data_[i] = (rand() - RAND_MAX / 2) / (10.0 * RAND_MAX);
+        //d_data_[i] = (rand() - RAND_MAX / 2) / (10.0 * RAND_MAX);
+        h_data_[i] = rand() / (float)RAND_MAX;
     }
     this->SyncToGpu();
 }
@@ -146,12 +147,12 @@ int Filter4d::Size() const
 
 void Filter4d::SyncToCpu() const
 {
-    checkCudaError(cudaMemcpy(this->h_data_, this->d_data_, this->size_ * sizeof(float), cudaMemcpyDeviceToHost));
+    checkCudaError(cudaMemcpyAsync(this->h_data_, this->d_data_, this->size_ * sizeof(float), cudaMemcpyDeviceToHost));
 }
 
 void Filter4d::SyncToGpu() const
 {
-    checkCudaError(cudaMemcpy(this->d_data_, this->h_data_, this->size_ * sizeof(float), cudaMemcpyHostToDevice));
+    checkCudaError(cudaMemcpyAsync(this->d_data_, this->h_data_, this->size_ * sizeof(float), cudaMemcpyHostToDevice));
 }
 
 cudnnFilterDescriptor_t Filter4d::Desc() const

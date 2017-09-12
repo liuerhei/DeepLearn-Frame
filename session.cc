@@ -21,6 +21,7 @@ void Session::update_workspace_size(size_t size)
         {
             checkCudaError(cudaFree(workspace_));
             checkCudaError(cudaMalloc(&workspace_, workspace_size_));
+            std::cout << "The workspace has updated\n";
         }
     }
 }

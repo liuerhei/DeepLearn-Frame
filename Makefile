@@ -27,6 +27,8 @@ operator/conv2d.o: operator/conv2d.cu
 	 $(CXX) $(CXXFLAGS)   -c -o $@ $^
 operator/fc2d.o: operator/fc2d.cu 
 	 $(CXX) $(CXXFLAGS)   -c -o $@ $^
+operator/fc2d_test.o: operator/fc2d_test.cu 
+	 $(CXX) $(CXXFLAGS)   -c -o $@ $^
 loss.o: loss.cu
 	 $(CXX) $(CXXFLAGS)   -c -o $@ $^
 main.o: main.cu

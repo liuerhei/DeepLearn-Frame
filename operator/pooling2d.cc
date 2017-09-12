@@ -68,7 +68,7 @@ void Pooling2d::Forward(bool del = false)
     ));
     //this->p_output_->PrintShape();
     this->p_output_->PrintShape();
-    //this->p_output_->PrintK(10);
+    this->p_output_->PrintK(10);
     //this->p_output_->PrintAll();
 }
 
@@ -90,14 +90,14 @@ float *Pooling2d::Backward(float *grads_down, bool del)
         &beta, p_input_->Desc(), grads_input_
     ));
     
-    float *a = (float *)malloc(sizeof(float) * p_input_->Size());
-    checkCudaError(cudaMemcpy(a, grads_input_, sizeof(float) * p_input_->Size(), cudaMemcpyDeviceToHost));
-    std::cout << "pool data gradients\n";
-    //for (int i = 0; i < p_input_->Size(); ++i)
-    for (int i = 0; i < 20; ++i)
-        std::cout << a[i] << ' ';
-    std::cout << "\n";
-    free(a);
+    //float *a = (float *)malloc(sizeof(float) * p_input_->Size());
+    //checkCudaError(cudaMemcpy(a, grads_input_, sizeof(float) * p_input_->Size(), cudaMemcpyDeviceToHost));
+    //std::cout << "pool data gradients\n";
+    ////for (int i = 0; i < p_input_->Size(); ++i)
+    //for (int i = 0; i < 20; ++i)
+    //    std::cout << a[i] << ' ';
+    //std::cout << "\n";
+    //free(a);
 
     return grads_input_;
 }

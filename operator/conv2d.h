@@ -17,6 +17,7 @@ public:
     void Forward(bool del);
     float *Backward(float *c, bool d);
     void UpdateWeights();
+    void ToFile(const char *fileprefix);
 
     /*
      * This function is used to init the filter weights by reading data from files
@@ -38,6 +39,8 @@ private:
     Padding_t padding_mode_;
     cudnnConvolutionDescriptor_t desc_;
     cudnnConvolutionFwdAlgo_t algo_;
+    cudnnConvolutionBwdDataAlgo_t dalgo_;
+    cudnnConvolutionBwdFilterAlgo_t falgo_;
     Tensor4d *p_input_;
     Tensor4d *p_output_;
     Filter4d *p_filter_;

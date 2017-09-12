@@ -2,6 +2,7 @@
 #include <sstream>
 
 #define RESET       "\033[0m"
+#define RED         "\033[31m"
 #define GREEN       "\033[32m"
 #define CYAN        "\033[36m"
 #define YELLOW      "\033[33m"
@@ -34,3 +35,4 @@
 #define log_info(x) do{std::cerr << CYAN << "[Info] " << x << " @" << __FILE__ << ":" << __LINE__ << RESET << std::endl;}while(false)
 #define log_func() do{std::cerr << CYAN << "[Function] " << __PRETTY_FUNCTION__ << RESET << std::endl;}while(false)
 #define log_warning(x) do{std::cerr << YELLOW << "[Warning] " << x << " @" << __FILE__ << ":" << __LINE__ << RESET << std::endl;}while(false)
+#define log_error(x) do{std::cerr << RED << "[Error] " << x << " @" << __FILE__ << ":" << __LINE__ << RESET << std::endl;}while(false)

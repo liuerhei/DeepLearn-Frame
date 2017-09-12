@@ -41,7 +41,7 @@ void Activation2d::Forward(bool del)
     checkCudnn(cudnnActivationForward(
         Session::instance().cudnn_handle(), desc_, &alpha, p_input_->Desc(), p_input_->GpuPointer(),
         &beta, p_output_->Desc(), p_output_->GpuPointer()));
-    p_output_->PrintAll();
+    //p_output_->PrintAll();
 }
 
 float *Activation2d::Backward(float *grads_down, bool del)
@@ -55,7 +55,7 @@ float *Activation2d::Backward(float *grads_down, bool del)
         p_output_->Desc(), grads_down, p_input_->Desc(), p_input_->GpuPointer(), &beta, p_input_->Desc(), grads_input_
     ));
     float *a = (float *)malloc(sizeof(float) * p_input_->Size());
-    checkCudaError(cudaMemcpy(a, grads_input_, sizeof(float) * p_input_->Size(), cudaMemcpyDeviceToHost));
+    checkCudaError(cudaMemcpyAsync(a, grads_input_, sizeof(float) * p_input_->Size(), cudaMemcpyDeviceToHost));
     std::cout << "activation data gradients\n";
     //for (int i = 0; i < p_input_->Size(); ++i)
     for (int i = 0; i < 20; ++i)

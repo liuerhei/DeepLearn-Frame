@@ -17,3 +17,6 @@ Now have a new question, when training 10 images, the softmax output are all 0.1
 Now the fc2d Backward has a problem, and add the filter backward workspace update. Up to now, the data workspace don't need add.         --2017-08-21
 
 Use cublasSgemm to compute the fully connection layer. Bue there is a problem that when weights is setted 0.01, the result was wrong.    --2017-09-07
+Now the fc backward has some problem, the GPU data cannot copy to CPU, and when add fc layer, the backward parameters is wrong. So need to check the backward code.
+                                                                                                                                         --2017-09-08
+Today, finding the problem of cudaMemcpy, because of the loss function. But the problem has solved automaticly. Need to make sense. And when use cudnn convolution backward, we need to allocated new workspace to satisfied the compution.                                                                      --2017-09-12
