@@ -4,7 +4,7 @@ __global__ void WUpdate(float *data, float *grad, int size, int RST)
 {
     int idx = threadIdx.x + blockDim.x * blockIdx.x;
     if (idx >= size) return;
-    data[idx] += grad[idx % RST];
+    data[idx] = data[idx] + grad[idx % RST] * 0.0001;
     __syncthreads();
 }
 
@@ -37,27 +37,21 @@ ITensor *Fc2d_test::LayerInit()
     length_ = p_input_->C() * p_input_->H() * p_input_->W();
     if(this->p_weights_ == nullptr)
     {
-        /*
-         * 这里需要借鉴lenet的代码，因为对于全连接网络的参数，只需要是(batchsize, output_channel*output_height,*output_width)
-         * lenet中是使用vector来实现的。
-         * 此处代码需重新规划，但是难度不大，可以使用cublas实现。
-         */
         this->p_weights_ = new Tensor4d(K_, p_input_->C(), p_input_->H(), p_input_->W());
-        //SetWeights(0.01f);
         p_weights_->Randomize();
-        p_weights_->PrintK(10);
     }
+    // Create cublas Handle
     checkCudaError(cublasCreate(&cublasHandle_));
     if(this->p_output_ == nullptr)
     {
         p_output_ = new Tensor4d(p_input_->N(), K_, 1, 1);
     }
-    std::cout << "Input Tensor shape: ";
-    p_input_->PrintShape();
-    std::cout << "Weights shape: ";
-    p_weights_->PrintShape();
-    std::cout << "Output Tensor shape: ";
-    p_output_->PrintShape();
+    //std::cout << "Input Tensor shape: ";
+    //p_input_->PrintShape();
+    //std::cout << "Weights shape: ";
+    //p_weights_->PrintShape();
+    //std::cout << "Output Tensor shape: ";
+    //p_output_->PrintShape();
     return p_output_;
 }
 
@@ -72,7 +66,10 @@ void Fc2d_test::Forward(bool del)
                                &beta,
                                out->GpuPointer(),        K_
     ));
-    out->PrintK(20);
+    //std::cout << "Fc layer input********************\n";
+    //p_input_->PrintK(100);
+    //std::cout << "Fc layer output********************\n";
+    //out->PrintK(100);
 }
 
 float *Fc2d_test::Backward(float *down_grads, bool del)
@@ -91,15 +88,16 @@ float *Fc2d_test::Backward(float *down_grads, bool del)
                                grads_weights_,         length_
     ));
 
-    float *a = (float*)malloc(sizeof(float) * 10);
-    if(a != nullptr)
-    {
-        checkCudaError(cudaMemcpy(a, grads_weights_, sizeof(float) * 10, cudaMemcpyDeviceToHost));
-        std::cout << "fc weights gradients\n";
-        for(int i = 0; i < 10; i++)
-            std::cout << a[i] << ' ';
-        std::cout << "\n";
-    }
+    //float *a = (float*)malloc(sizeof(float) * 1000);
+    //if(a != nullptr)
+    //{
+    //    checkCudaError(cudaMemcpy(a, grads_weights_, sizeof(float) * 1000, cudaMemcpyDeviceToHost));
+    //    std::cout << "fc weights gradients\n";
+    //    for(int i = 0; i < 1000; i++)
+    //        std::cout << a[i] << ' ';
+    //    std::cout << "\n";
+    //    free(a);
+    //}
 
     checkCudaError(cublasSgemm(cublasHandle_, CUBLAS_OP_N, CUBLAS_OP_N,
                                length_, p_input_->N(), K_,
@@ -109,26 +107,28 @@ float *Fc2d_test::Backward(float *down_grads, bool del)
                                &beta,
                                grads_data_,              length_
     ));
-    std::cout << "The fc grads_data shape is：" << p_input_->N() << '*' << length_ << '=' << p_input_->Size() << "\n";
     
-    a = (float *)malloc(sizeof(float) * 10);
-    if(a != nullptr)
-    {
-        checkCudaError(cudaMemcpy(a, grads_data_, sizeof(float) * 10, cudaMemcpyDeviceToHost));
-        std::cout << "fc data gradients\n";
-        for(int i = 0; i < 10; i++)
-            std::cout << a[i] << ' ';
-        std::cout << "\n";
-        free(a);
-    }
+    //float *b = (float*)malloc(sizeof(float) * 100);
+    //if(b != nullptr)
+    //{
+    //    checkCudaError(cudaMemcpy(b, grads_data_, sizeof(float) * 100, cudaMemcpyDeviceToHost));
+    //    std::cout << "fc data gradients\n";
+    //    for(int i = 0; i < 100; i++)
+    //        std::cout << b[i] << ' ';
+    //    std::cout << "\n";
+    //    free(b);
+    //}
     return grads_data_;
 }
 
 void Fc2d_test::UpdateWeights()
 {
+     //p_weights_->PrintK(100);
      int size = p_weights_->Size();
      int K = p_weights_->N();
      WUpdate<<<(size + 255) / 256, 256>>>(p_weights_->GpuPointer(), grads_weights_, size, size / K);
+     //p_weights_->PrintK(100);
+     
 }
 
 void Fc2d_test::SetWeights(float data)

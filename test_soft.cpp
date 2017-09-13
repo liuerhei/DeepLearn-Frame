@@ -11,9 +11,10 @@ int main(void)
     ITensor *input  = nullptr;
     ITensor *output = nullptr;
     Softmax *soft = new Softmax();
+    
     for(int i = 1; i < 100000; i *= 10)
     {
-        a->SetValue(i);
+        a->Randomize(i);
         input = a;
         soft->AddInput(input);
         soft->LayerInit();

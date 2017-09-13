@@ -59,12 +59,14 @@ bool Tensor4d::operator==(const Tensor4d &m)
 
 }
 
-void Tensor4d::Randomize()
+void Tensor4d::Randomize(float diff)
 {
     for(int i = 0; i < this->size_; i++)
     {
         //h_data_[i] = (rand() - RAND_MAX / 2) / (10.0 * RAND_MAX);
-        h_data_[i] = rand() / (100.0 * RAND_MAX);
+        h_data_[i] = rand() / (100.0 * RAND_MAX) + diff;
+        //Just test softmax
+        //h_data_[i] = rand() / (1.0 * RAND_MAX) * 50000;
     }
     this->SyncToGpu();
 }
@@ -86,6 +88,7 @@ void Tensor4d::SetValue(float *data, size_t size)
 void Tensor4d::PrintK(int count) const
 {
     this->SyncToCpu();
+    count = (count > size_) ? size_ : count;
     for(int i = 0; i < count; ++i)
     {
         std::cout << std::setw(9) << h_data_[i] << "\t";

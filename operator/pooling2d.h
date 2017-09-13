@@ -18,8 +18,8 @@ public:
     ~Pooling2d();
     void AddInput(ITensor *);
     ITensor *LayerInit();
-    void Forward(bool);
-    float *Backward(float *grads_down, bool del);
+    void Forward(bool del = false);
+    float *Backward(float *grads_down, bool del= false);
 
 private:
     int padA_[2];

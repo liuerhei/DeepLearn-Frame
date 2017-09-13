@@ -1,9 +1,7 @@
 #ifndef FC2D_TEST_H
 #define FC2D_TEST_H
 
-#include "ioperator.h"
 #include "cublas_v2.h"
-#include "../wheel.h"
 #include "../tensor/tensor4d.h"
 #include "../session.h"
 

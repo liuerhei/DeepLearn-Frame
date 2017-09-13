@@ -16,7 +16,7 @@ public:
     Tensor4d& operator=(const Tensor4d& m);
     bool operator==(const Tensor4d& m);
 
-    void Randomize();
+    void Randomize(float diff = 0.0f);
     void SetValue(float val);
     void SetValue(float *data, size_t size);
     void PrintK(int k) const;

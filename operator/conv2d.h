@@ -14,8 +14,8 @@ public:
     ~Conv2d();
     void AddInput(ITensor* input);
     ITensor *LayerInit();
-    void Forward(bool del);
-    float *Backward(float *c, bool d);
+    void Forward(bool del = false);
+    float *Backward(float *c, bool del = false);
     void UpdateWeights();
     void ToFile(const char *fileprefix);
 

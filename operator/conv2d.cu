@@ -5,7 +5,7 @@ __global__ void DUpdate(float *data, float *grad, int size, int RST)
 {
     int idx = threadIdx.x + blockDim.x * blockIdx.x;
     if (idx >= size) return;
-    data[idx] += grad[idx % RST];
+    data[idx] += grad[idx % RST] * 0.01;
     __syncthreads();
 }
 
@@ -53,13 +53,8 @@ ITensor *Conv2d::LayerInit()
     if (this->p_filter_ == nullptr)
     {
         this->p_filter_ = new Filter4d(K_, p_input_->C(), S_, T_);
-        std::cout << "Add new Filter here\n";
-        p_filter_->PrintShape();
-        //SetWeights(0.01f);
         p_filter_->Randomize();
-        p_filter_->PrintK(100);
     }
-    std::cout << "1\n";
     // Init the space and weights of filter.
     
     int h = p_input_->H();
@@ -95,9 +90,9 @@ ITensor *Conv2d::LayerInit()
         p_output_ = new Tensor4d(N_out, C_out, H_out, W_out);
         Tensor4d *out = dynamic_cast<Tensor4d*>(p_output_);
     
-        p_input_->PrintShape();
-        p_filter_->PrintShape();
-        out->PrintShape();
+        //p_input_->PrintShape();
+        //p_filter_->PrintShape();
+        //out->PrintShape();
         checkCudnn(cudnnGetConvolutionForwardAlgorithm(
             Session::instance().cudnn_handle(), p_input_->Desc(), p_filter_->Desc(), desc_,
             out->Desc(), CUDNN_CONVOLUTION_FWD_PREFER_FASTEST, 0, &algo_
@@ -139,7 +134,7 @@ ITensor *Conv2d::LayerInit()
     return p_output_;
 }
 
-void Conv2d::Forward(bool del = false)
+void Conv2d::Forward(bool del)
 {
     Tensor4d *out = dynamic_cast<Tensor4d*>(p_output_);
     checkCudnn(cudnnConvolutionForward(
@@ -151,10 +146,13 @@ void Conv2d::Forward(bool del = false)
     //checkCudnn(cudnnAddTensor(
     //    Session::instance().cudnn_handle(), &alpha, bias_->Desc(), bias_->GpuPointer(), &beta, out->Desc(), out->GpuPointer()
     //));
-    out->PrintK(10);
+    //std::cout << "Conv layer input****************************\n";
+    //p_input_->PrintK(100);
+    //std::cout << "Conv layer output****************************\n";
+    //out->PrintK(100);
 }
 
-float *Conv2d::Backward(float *down_grads, bool del = false)
+float *Conv2d::Backward(float *down_grads, bool del)
 {
      if (grads_filter_ == nullptr && grads_data_ == nullptr)
      {
