@@ -19,7 +19,7 @@ public:
     cudnnHandle_t cudnn_handle() const;
     void AddLayer(IOperator *op);
     void AddInput(Tensor4d *input);
-    //void Build();
+    void Build();
     void Forward();
     void Backward(float *loss);
     void UpdateWeights(float learning_rate = 0.01);

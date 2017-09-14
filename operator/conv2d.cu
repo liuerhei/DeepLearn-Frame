@@ -196,13 +196,13 @@ float *Conv2d::Backward(float *down_grads, bool del)
      //// This is a test, it seems that the gradients always is 0
      //std::cout << "\n";
 
-     float *b = (float *)malloc(sizeof(float) * p_input_->Size());
-     checkCudaError(cudaMemcpy(b, grads_data_,  sizeof(float) * p_input_->Size(),   cudaMemcpyDeviceToHost));
-     std::cout << "conv data gradients\n";
-     for(int i = 0; i < p_input_->Size(); ++i)
-        std::cout << b[i] << ' ';
-     std::cout << "\n";
-     free(b);
+     //float *b = (float *)malloc(sizeof(float) * p_input_->Size());
+     //checkCudaError(cudaMemcpy(b, grads_data_,  sizeof(float) * p_input_->Size(),   cudaMemcpyDeviceToHost));
+     //std::cout << "conv data gradients\n";
+     //for(int i = 0; i < p_input_->Size(); ++i)
+     //   std::cout << b[i] << ' ';
+     //std::cout << "\n";
+     //free(b);
      return grads_data_;
 }
 
@@ -213,7 +213,7 @@ void Conv2d::UpdateWeights(float learning_rate)
     DUpdate<<<(size + 255) / 256, 256>>>(p_filter_->GpuPointer(), grads_filter_, size, size / K, learning_rate);
     DUpdate<<<(bias_->Size() + 255) / 256, 256>>>(bias_->GpuPointer(), grads_bias_, bias_->Size(), bias_->Size(), 1);
     //p_filter_->PrintK(10);
-    bias_->PrintK(100);
+    //bias_->PrintK(100);
 }
 
 void Conv2d::SetWeights(float data)

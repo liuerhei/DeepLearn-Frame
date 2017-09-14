@@ -58,8 +58,6 @@ int main(void)
     Tensor4d *b = new Tensor4d(kBatchsize, kChannel, 1,     1);
     a->SetValue(&train_image_float[0], kBatchsize * kChannel * width * height);
     b->SetValue(&train_label_float[0], kBatchsize);
-    ITensor *c = a;
-    dynamic_cast<Tensor4d*>(c)->PrintK(100);
 
     //IOperator *pointer = new Conv2d(32, 5, 5);
     //Session::instance().AddLayer(new Conv2d(32, 5, 5));
@@ -74,13 +72,24 @@ int main(void)
     Session::instance().AddLayer(new Fc2d_test(10));
     Session::instance().AddLayer(new Softmax());
 
-    //Session::instance().Build();
+    Session::instance().Build();
 
     Session::instance().Forward();
     std::cout << train_label_float[0] << "\n";
+    Tensor4d *Final = dynamic_cast<Tensor4d*>(Session::instance().Output());
 
-    dynamic_cast<Tensor4d*>(Session::instance().Output())->PrintK(10);
+    float scalVal = 1.0 / (kBatchsize * 10);
+    cublasHandle_t cublasHandle;
+    checkCudaError(cublasCreate(&cublasHandle));
+    loss<<<1, 100>>>(b->GpuPointer(), 10, kBatchsize, Final->GpuPointer());
+    checkCudaError(cublasSscal(cublasHandle, Final->Size(), &scalVal, Final->GpuPointer(), 1));
 
+    Session::instance().Backward(Final->GpuPointer());
+    Session::instance().UpdateWeights(1);
+    
+    a->SetValue(&train_image_float[0], kBatchsize * kChannel * width * height);
+    Session::instance().AddInput(a);
+    Session::instance().Forward();
     //ITensor *input      = nullptr;
     //ITensor *conv1_out  = nullptr;
     //ITensor *pool1_out  = nullptr;

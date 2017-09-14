@@ -70,19 +70,19 @@ void Session::AddInput(Tensor4d *input)
     p_input_ = input;
 }
 
-//void Session::Build()
-//{
-//    ITensor *input  = p_input_;
-//    ITensor *output = nullptr;
-//    std::deque<IOperator*>::reverse_iterator iter;
-//    for (iter = model_.rbegin(); iter != model_.rend(); ++iter)
-//    {
-//        (*iter)->AddInput(input);
-//        output = (*iter)->LayerInit();
-//        input  = output;
-//    }
-//    p_output_ = output;
-//}
+void Session::Build()
+{
+    ITensor *input  = p_input_;
+    ITensor *output = nullptr;
+    std::deque<IOperator*>::reverse_iterator iter;
+    for (iter = model_.rbegin(); iter != model_.rend(); ++iter)
+    {
+        (*iter)->AddInput(input);
+        output = (*iter)->LayerInit();
+        input  = output;
+    }
+    p_output_ = output;
+}
 
 void Session::Forward()
 // 这里需要重构代码，应该是先建立网络模型，之后独立进行forward和backward
@@ -95,10 +95,12 @@ void Session::Forward()
     {
         (*iter)->AddInput(input);
         output = (*iter)->LayerInit();
+        // when use build and delete this code, there will have a bug.
+        // TODO
         (*iter)->Forward(false);
         input  = output;
     }
-    dynamic_cast<Tensor4d*>(output)->PrintK(10);
+    p_output_ = output;
 }
 
 void Session::Backward(float *loss)
