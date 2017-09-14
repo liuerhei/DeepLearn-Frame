@@ -16,7 +16,7 @@ public:
     ITensor *LayerInit();
     void Forward(bool del = false);
     float *Backward(float *c, bool del = false);
-    void UpdateWeights();
+    void UpdateWeights(float learning_rate = 0.01);
     void ToFile(const char *fileprefix);
 
     /*

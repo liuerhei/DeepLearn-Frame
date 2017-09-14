@@ -24,7 +24,7 @@ public:
     void AddInput(ITensor *);
     ITensor *LayerInit();
     void Forward(bool del = false);
-    float *Backward(float *grads_down, bool);
+    float *Backward(float *grads_down, bool del = false);
 private:
     cudnnActivationMode_t mode_;
     cudnnActivationDescriptor_t desc_;

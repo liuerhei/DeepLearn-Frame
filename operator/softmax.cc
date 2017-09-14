@@ -39,7 +39,7 @@ void Softmax::Forward(bool del)
         &beta, out->Desc(), out->GpuPointer()
     ));
     //std::cout << "Softmax layer input*****************\n";
-    //p_input_->PrintK(100);
+    p_input_->PrintK(100);
     std::cout << "Softmax layer output*****************\n";
     out->PrintK(10);
 }

@@ -50,34 +50,75 @@ size_t Session::workspace_size() const
     return this->workspace_size_;
 }
 
-//void Session::add(IOperator *op)
-//{
-//    model_.push(op);
-//}
+void Session::AddLayer(IOperator *op)
+{
+    model_.push_front(op);
+}
 
 int Session::size()
 {
     return model_.size();
 }
 
-//void Session::set_input(Tensor4d *input)
+ITensor* Session::Output() 
+{
+    return p_output_;
+}
+
+void Session::AddInput(Tensor4d *input)
+{
+    p_input_ = input;
+}
+
+//void Session::Build()
 //{
-//    p_input_ = input;
-//}
-//
-//void Session::run()
-//{
-//    ITensor *input = p_input_;
+//    ITensor *input  = p_input_;
 //    ITensor *output = nullptr;
-//    while (!model_.empty())
+//    std::deque<IOperator*>::reverse_iterator iter;
+//    for (iter = model_.rbegin(); iter != model_.rend(); ++iter)
 //    {
-//        output = model_.front()->add_input(input, false);
-//        model_.front()->Forward();
-//        delete model_.front();
-//        model_.pop();
-//        input = output;
+//        (*iter)->AddInput(input);
+//        output = (*iter)->LayerInit();
+//        input  = output;
 //    }
+//    p_output_ = output;
 //}
+
+void Session::Forward()
+// 这里需要重构代码，应该是先建立网络模型，之后独立进行forward和backward
+// The model_ is a deque, so the rbegin is the first add layer
+{
+    ITensor *input  = p_input_;
+    ITensor *output = nullptr;
+    std::deque<IOperator*>::reverse_iterator iter;
+    for (iter = model_.rbegin(); iter != model_.rend(); ++iter)
+    {
+        (*iter)->AddInput(input);
+        output = (*iter)->LayerInit();
+        (*iter)->Forward(false);
+        input  = output;
+    }
+    dynamic_cast<Tensor4d*>(output)->PrintK(10);
+}
+
+void Session::Backward(float *loss)
+{
+    float *grads_loss = loss;
+    std::deque<IOperator*>::iterator iter;
+    for (iter = model_.begin(); iter != model_.end(); ++iter)
+    {
+        grads_loss = (*iter)->Backward(grads_loss, false);
+    }
+}
+
+void Session::UpdateWeights(float learning_rate)
+{
+    std::deque<IOperator*>::reverse_iterator iter;
+    for (iter = model_.rbegin(); iter != model_.rend(); ++iter)
+    {
+        (*iter)->UpdateWeights(learning_rate);
+    }
+}
 
 Session::~Session()
 {

@@ -9,20 +9,12 @@ LDFLAGS = -arch=sm_35 -lcuda -lcudnn -lcublas
 #
 run: main.o wheel.o session.o loss.o					\
 	tensor/itensor.o operator/ioperator.o  				\
-	operator/conv2d.o operator/pooling2d.o operator/activation2d.o operator/softmax.o operator/fc2d.o		\
-	operator/fc2d_test.o												\
+	operator/conv2d.o operator/pooling2d.o operator/activation2d.o operator/softmax.o 				\
+	operator/fc2d.o													\
 	tensor/tensor4d.o tensor/filter4d.o                                                                             \
 	readubyte.o
 	$(LD) $(LDFLAGS) -o $@ $^
-# This is to test fc layer
-#run: test_fc.o wheel.o session.o loss.o					\
-#	tensor/itensor.o operator/ioperator.o  				\
-#	operator/conv2d.o operator/pooling2d.o operator/activation2d.o operator/softmax.o operator/fc2d.o		\
-#	tensor/tensor4d.o tensor/filter4d.o                                                                             \
-#	readubyte.o
-#	$(LD) $(LDFLAGS) -o $@ $^
-# .cu file
-#
+
 operator/conv2d.o: operator/conv2d.cu 
 	 $(CXX) $(CXXFLAGS)   -c -o $@ $^
 operator/fc2d.o: operator/fc2d.cu 

@@ -5,7 +5,7 @@
 #include "operator/ioperator.h"
 #include "tensor/itensor.h"
 #include "tensor/tensor4d.h"
-#include <queue>
+#include <deque>
 
 class Session
 {
@@ -17,22 +17,27 @@ public:
     void allocate_workspace();
     void update_workspace_size(size_t size);
     cudnnHandle_t cudnn_handle() const;
-//    void add(IOperator *op);
-//    void run();
+    void AddLayer(IOperator *op);
+    void AddInput(Tensor4d *input);
+    //void Build();
+    void Forward();
+    void Backward(float *loss);
+    void UpdateWeights(float learning_rate = 0.01);
     int size();
-//    void set_input(Tensor4d *input);
+    ITensor* Output();
+
 
 private:
     Session()
     {
         workspace_size_ = 0;
-        workspace_ = nullptr;
         have_workspace_ = false;
+        workspace_      = nullptr;
+        p_input_        = nullptr;
+        p_output_       = nullptr;
         checkCudnn(cudnnCreate(&handle_));
-        while(!model_.empty())
-            model_.pop();
-        p_input_ = nullptr;
-        p_output_= nullptr;
+        if(!model_.empty())
+             model_.clear();
     }
 
     ~Session();
@@ -42,7 +47,7 @@ private:
     void *workspace_;
     size_t workspace_size_;
     static Session instance_;
-    std::queue<IOperator*> model_;
+    std::deque<IOperator*> model_;
     ITensor *p_input_;
     ITensor *p_output_;
 };

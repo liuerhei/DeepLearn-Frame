@@ -10,7 +10,7 @@ float *IOperator::Backward(float *a, bool del)
      return a;
 }
 
-void IOperator::UpdateWeights()
+void IOperator::UpdateWeights(float learning_rate)
 {
 
 }

@@ -46,7 +46,7 @@ public:
      * update filter weights by calling this function
      * Now the function does not synchronize with the cpu.
      */
-    virtual void UpdateWeights();
+    virtual void UpdateWeights(float);
 protected:
     /*
      * This is used to save the shape of output tensor.
