@@ -30,10 +30,10 @@ private:
     float beta;
     float *grads_input_;
     cudnnPoolingDescriptor_t desc_;
+    cudnnPoolingMode_t mode_;
     Tensor4d *p_input_;
     Tensor4d *p_output_;
     Padding_t padding_mode_;
-    cudnnPoolingMode_t mode_;
 }; 
 
 #endif

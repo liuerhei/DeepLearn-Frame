@@ -50,64 +50,55 @@ size_t Session::workspace_size() const
     return this->workspace_size_;
 }
 
-void Session::AddLayer(IOperator *op)
-{
-    model_.push_front(op);
-}
-
 int Session::size()
 {
     return model_.size();
 }
 
-ITensor* Session::Output() 
-{
-    return p_output_;
-}
 
 void Session::AddInput(Tensor4d *input)
 {
     p_input_ = input;
 }
 
+void Session::AddLayer(IOperator *op)
+{
+    model_.push_back(op);
+}
+
 void Session::Build()
 {
     ITensor *input  = p_input_;
     ITensor *output = nullptr;
-    std::deque<IOperator*>::reverse_iterator iter;
-    for (iter = model_.rbegin(); iter != model_.rend(); ++iter)
+    for (IOperator* op : model_)
     {
-        (*iter)->AddInput(input);
-        output = (*iter)->LayerInit();
+        op->AddInput(input);
+        output = op->LayerInit();
+        output_.push_back(output);
         input  = output;
     }
+    std::cout << "1\n";
     p_output_ = output;
 }
 
 void Session::Forward()
-// 这里需要重构代码，应该是先建立网络模型，之后独立进行forward和backward
-// The model_ is a deque, so the rbegin is the first add layer
 {
+    std::cout << "This is in forward\n";
     ITensor *input  = p_input_;
     ITensor *output = nullptr;
-    std::deque<IOperator*>::reverse_iterator iter;
-    for (iter = model_.rbegin(); iter != model_.rend(); ++iter)
+    for (int i = 0; i < model_.size(); ++i)
     {
-        (*iter)->AddInput(input);
-        output = (*iter)->LayerInit();
-        // when use build and delete this code, there will have a bug.
-        // TODO
-        (*iter)->Forward(false);
-        input  = output;
+        model_.at(i)->AddInput(input);
+        model_.at(i)->Forward(false);
+        input = output_.at(i);
     }
-    p_output_ = output;
 }
 
 void Session::Backward(float *loss)
 {
     float *grads_loss = loss;
-    std::deque<IOperator*>::iterator iter;
-    for (iter = model_.begin(); iter != model_.end(); ++iter)
+    std::deque<IOperator*>::reverse_iterator iter;
+    for (iter = model_.rbegin(); iter != model_.rend(); ++iter)
     {
         grads_loss = (*iter)->Backward(grads_loss, false);
     }
@@ -120,6 +111,11 @@ void Session::UpdateWeights(float learning_rate)
     {
         (*iter)->UpdateWeights(learning_rate);
     }
+}
+
+ITensor *Session::Output()
+{
+    return p_output_;
 }
 
 Session::~Session()

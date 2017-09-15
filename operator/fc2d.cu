@@ -54,6 +54,7 @@ ITensor *Fc2d_test::LayerInit()
         p_bias_ = new Tensor4d(1, K_, 1, 1);
         p_bias_->Randomize();
     }
+    p_output_->PrintShape();
     return p_output_;
 }
 

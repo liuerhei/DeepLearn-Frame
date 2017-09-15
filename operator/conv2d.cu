@@ -131,6 +131,7 @@ ITensor *Conv2d::LayerInit()
         bias_ = new Tensor4d(1, C_out, H_out, W_out);
         bias_->Randomize(0.1);
     }
+    p_output_->PrintShape();
     return p_output_;
 }
 
@@ -143,13 +144,13 @@ void Conv2d::Forward(bool del)
         Session::instance().workspace(), Session::instance().workspace_size(),
         &beta, out->Desc(), out->GpuPointer() 
     ));
-    std::cout << "Conv layer input****************************\n";
-    p_input_->PrintK(100);
-    std::cout << "Conv layer output****************************\n";
-    out->PrintK(100);
-    std::cout << "conv layer bias******************************\n";
-    bias_->PrintK(100);
-    AddBias<<<(out->Size() + 255) / 256, 256>>>(out->GpuPointer(), bias_->GpuPointer(), out->Size(), bias_->Size());
+    //std::cout << "Conv layer input****************************\n";
+    //p_input_->PrintK(100);
+    //std::cout << "Conv layer output****************************\n";
+    //out->PrintK(100);
+    //std::cout << "conv layer bias******************************\n";
+    //bias_->PrintK(100);
+    //AddBias<<<(out->Size() + 255) / 256, 256>>>(out->GpuPointer(), bias_->GpuPointer(), out->Size(), bias_->Size());
     //checkCudnn(cudnnAddTensor(
     //    Session::instance().cudnn_handle(), &alpha, bias_->Desc(), bias_->GpuPointer(), 
     //    &beta, out->Desc(), out->GpuPointer()

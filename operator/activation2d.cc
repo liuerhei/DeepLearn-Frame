@@ -6,7 +6,7 @@ Activation2d::Activation2d(cudnnActivationMode_t mode) : mode_(mode)
     beta          = 0.0f;
     p_input_      = nullptr;
     p_output_     = nullptr;
-    grads_input_   = nullptr;
+    grads_input_  = nullptr;
 }
 
 Activation2d::~Activation2d()
@@ -64,5 +64,6 @@ float *Activation2d::Backward(float *grads_down, bool del)
     free(a);
     return grads_input_;
 }
+
 
 

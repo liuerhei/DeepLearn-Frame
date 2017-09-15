@@ -10,6 +10,15 @@ enum Padding_t
     same
 };
 
+enum OperatorName
+{
+    convolution,
+    pooling,
+    fullyconnection,
+    softmax,
+    activation
+};
+
 class IOperator
 {
 public:
@@ -47,6 +56,7 @@ public:
      * Now the function does not synchronize with the cpu.
      */
     virtual void UpdateWeights(float);
+ 
 protected:
     /*
      * This is used to save the shape of output tensor.

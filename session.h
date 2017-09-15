@@ -38,6 +38,8 @@ private:
         checkCudnn(cudnnCreate(&handle_));
         if(!model_.empty())
              model_.clear();
+        if(!output_.empty())
+             output_.clear();
     }
 
     ~Session();
@@ -48,6 +50,7 @@ private:
     size_t workspace_size_;
     static Session instance_;
     std::deque<IOperator*> model_;
+    std::deque<ITensor*> output_;
     ITensor *p_input_;
     ITensor *p_output_;
 };

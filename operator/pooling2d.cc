@@ -55,6 +55,7 @@ ITensor *Pooling2d::LayerInit()
     {
         this->p_output_ = new Tensor4d(p_input_->N(), C_out, H_out, W_out);
     }
+    p_output_->PrintShape();
     return p_output_;
 }
 
@@ -99,6 +100,7 @@ float *Pooling2d::Backward(float *grads_down, bool del)
 
     return grads_input_;
 }
+
 
 
 

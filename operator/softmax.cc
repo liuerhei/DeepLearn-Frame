@@ -28,6 +28,7 @@ ITensor *Softmax::LayerInit()
     {
         p_output_ = new Tensor4d(p_input_->N(), p_input_->C(), p_input_->H(), p_input_->W());
     }
+    p_output_->PrintShape();
     return p_output_;
 }
 
