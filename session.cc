@@ -37,7 +37,12 @@ void Session::allocate_workspace()
 
 cudnnHandle_t Session::cudnn_handle() const
 {
-    return this->handle_;
+    return this->cudnnHandle_;
+}
+
+cublasHandle_t Session::cublas_handle() const
+{
+    return this->cublasHandle_;
 }
 
 void *Session::workspace() const
@@ -49,12 +54,6 @@ size_t Session::workspace_size() const
 {
     return this->workspace_size_;
 }
-
-int Session::size()
-{
-    return model_.size();
-}
-
 
 void Session::AddInput(Tensor4d *input)
 {
@@ -77,13 +76,11 @@ void Session::Build()
         output_.push_back(output);
         input  = output;
     }
-    std::cout << "1\n";
     p_output_ = output;
 }
 
 void Session::Forward()
 {
-    std::cout << "This is in forward\n";
     ITensor *input  = p_input_;
     ITensor *output = nullptr;
     for (int i = 0; i < model_.size(); ++i)
@@ -106,8 +103,8 @@ void Session::Backward(float *loss)
 
 void Session::UpdateWeights(float learning_rate)
 {
-    std::deque<IOperator*>::reverse_iterator iter;
-    for (iter = model_.rbegin(); iter != model_.rend(); ++iter)
+    std::deque<IOperator*>::iterator iter;
+    for (iter = model_.begin(); iter != model_.end(); ++iter)
     {
         (*iter)->UpdateWeights(learning_rate);
     }
@@ -120,7 +117,8 @@ ITensor *Session::Output()
 
 Session::~Session()
 {
-    checkCudnn(cudnnDestroy(handle_));
+    checkCudnn(cudnnDestroy(cudnnHandle_));
+    checkCudaError(cublasDestroy(cublasHandle_));
     checkCudaError(cudaFree(workspace_));
 }
 

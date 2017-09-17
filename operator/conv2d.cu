@@ -48,6 +48,8 @@ Conv2d::~Conv2d()
 void Conv2d::AddInput(ITensor *input)
 {
     this->p_input_ = dynamic_cast<Tensor4d*>(input);
+    //std::cout << "The input tensor is\n";
+    //p_input_->PrintK(100);
 }
 
 ITensor *Conv2d::LayerInit()
@@ -129,6 +131,7 @@ ITensor *Conv2d::LayerInit()
     if (this->bias_ == nullptr)
     {
         bias_ = new Tensor4d(1, C_out, H_out, W_out);
+        // in lenet, the bias tensor shape is 1, channel, 1, 1
         bias_->Randomize(0.1);
     }
     p_output_->PrintShape();
@@ -155,8 +158,8 @@ void Conv2d::Forward(bool del)
     //    Session::instance().cudnn_handle(), &alpha, bias_->Desc(), bias_->GpuPointer(), 
     //    &beta, out->Desc(), out->GpuPointer()
     //));
-    std::cout << "Conv layer add bias & out ****************************\n";
-    out->PrintK(100);
+    //std::cout << "Conv layer add bias & out ****************************\n";
+    //out->PrintK(100);
 }
 
 float *Conv2d::Backward(float *down_grads, bool del)
@@ -211,9 +214,12 @@ void Conv2d::UpdateWeights(float learning_rate)
 {
     int size = p_filter_->Size();
     int K = p_filter_->K();
-    DUpdate<<<(size + 255) / 256, 256>>>(p_filter_->GpuPointer(), grads_filter_, size, size / K, learning_rate);
-    DUpdate<<<(bias_->Size() + 255) / 256, 256>>>(bias_->GpuPointer(), grads_bias_, bias_->Size(), bias_->Size(), 1);
+    //std::cout << "**************************************\n";
     //p_filter_->PrintK(10);
+    DUpdate<<<(size + 255) / 256, 256>>>(p_filter_->GpuPointer(), grads_filter_, size, size / K, learning_rate);
+    //DUpdate<<<(bias_->Size() + 255) / 256, 256>>>(bias_->GpuPointer(), grads_bias_, bias_->Size(), bias_->Size(), 1);
+    //p_filter_->PrintK(10);
+    //std::cout << "**************************************\n";
     //bias_->PrintK(100);
 }
 

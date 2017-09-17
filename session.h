@@ -2,6 +2,7 @@
 #define SESSION_H
 
 #include "wheel.h"
+#include "cublas_v2.h"
 #include "operator/ioperator.h"
 #include "tensor/itensor.h"
 #include "tensor/tensor4d.h"
@@ -17,13 +18,13 @@ public:
     void allocate_workspace();
     void update_workspace_size(size_t size);
     cudnnHandle_t cudnn_handle() const;
+    cublasHandle_t cublas_handle() const;
     void AddLayer(IOperator *op);
     void AddInput(Tensor4d *input);
     void Build();
     void Forward();
     void Backward(float *loss);
     void UpdateWeights(float learning_rate = 0.01);
-    int size();
     ITensor* Output();
 
 
@@ -35,7 +36,8 @@ private:
         workspace_      = nullptr;
         p_input_        = nullptr;
         p_output_       = nullptr;
-        checkCudnn(cudnnCreate(&handle_));
+        checkCudnn(cudnnCreate(&cudnnHandle_));
+        checkCudaError(cublasCreate(&cublasHandle_));
         if(!model_.empty())
              model_.clear();
         if(!output_.empty())
@@ -45,7 +47,8 @@ private:
     ~Session();
 
     bool have_workspace_;
-    cudnnHandle_t handle_;
+    cudnnHandle_t cudnnHandle_;
+    cublasHandle_t cublasHandle_;
     void *workspace_;
     size_t workspace_size_;
     static Session instance_;

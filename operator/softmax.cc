@@ -39,10 +39,10 @@ void Softmax::Forward(bool del)
         Session::instance().cudnn_handle(), algo_, mode_, &alpha, p_input_->Desc(), p_input_->GpuPointer(), 
         &beta, out->Desc(), out->GpuPointer()
     ));
-    //std::cout << "Softmax layer input*****************\n";
-    p_input_->PrintK(100);
+    std::cout << "Softmax layer input*****************\n";
+    p_input_->PrintK(64);
     std::cout << "Softmax layer output*****************\n";
-    out->PrintK(10);
+    out->PrintK(64);
 }
 
 float *Softmax::Backward(float *grads_down, bool del)

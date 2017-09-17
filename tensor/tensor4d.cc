@@ -63,10 +63,8 @@ void Tensor4d::Randomize(float diff)
 {
     for(int i = 0; i < this->size_; i++)
     {
-        //h_data_[i] = (rand() - RAND_MAX / 2) / (10.0 * RAND_MAX);
-        h_data_[i] = rand() / (100.0 * RAND_MAX) + diff;
-        //Just test softmax
-        //h_data_[i] = rand() / (1.0 * RAND_MAX) * 50000;
+        h_data_[i] = (rand() - RAND_MAX / 2) / (10.0 * RAND_MAX) + diff;
+        //h_data_[i] = rand() / (100.0 * RAND_MAX) + diff;
     }
     this->SyncToGpu();
 }
@@ -80,6 +78,7 @@ void Tensor4d::SetValue(float val)
 
 void Tensor4d::SetValue(float *data, size_t size)
 {
+    size = size > size_ ? size_ : size;
     for(size_t i = 0; i < size; ++i)
         h_data_[i] = data[i];
     this->SyncToGpu();
@@ -98,16 +97,16 @@ void Tensor4d::PrintK(int count) const
 
 void Tensor4d::PrintAll() const
 {
-    //this->PrintK(this->size_);
-    this->SyncToCpu();
-    for(int i = 0; i < N_; ++i)
-        for(int j = 0; j < C_; ++j)
-            for(int i = 0; i < H_; ++i)
-            {
-                for(int j = 0; j < W_; ++j)
-                    std::cout << std::setw(9) << h_data_[i * W_ + j] << "\t";
-                std::cout << "\n";
-            }
+    this->PrintK(this->size_);
+    //this->SyncToCpu();
+    //for(int i = 0; i < N_; ++i)
+    //    for(int j = 0; j < C_; ++j)
+    //        for(int i = 0; i < H_; ++i)
+    //        {
+    //            for(int j = 0; j < W_; ++j)
+    //                std::cout << std::setw(9) << h_data_[i * W_ + j] << "\t";
+    //            std::cout << "\n";
+    //        }
 }
 
 

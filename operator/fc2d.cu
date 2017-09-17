@@ -4,11 +4,11 @@ __global__ void WUpdate(float *data, float *grad, int size, int RST, float learn
 {
     int idx = threadIdx.x + blockDim.x * blockIdx.x;
     if (idx >= size) return;
-    data[idx] = data[idx] + grad[idx % RST] * learning_rate;
+    data[idx] += grad[idx % RST] * learning_rate;
     __syncthreads();
 }
 
-Fc2d_test::Fc2d_test(int k) : K_(k)
+Fc2d::Fc2d(int k) : K_(k)
 {
     alpha          = 1.0f;
     beta           = 0.0f;
@@ -21,30 +21,28 @@ Fc2d_test::Fc2d_test(int k) : K_(k)
     grads_weights_ = nullptr;
 }
 
-Fc2d_test::~Fc2d_test()
+Fc2d::~Fc2d()
 {
-    checkCudaError(cublasDestroy(cublasHandle_));
     delete p_weights_;
     free(grads_weights_);
     free(grads_data_);
     free(grads_bias_);
 }
 
-void Fc2d_test::AddInput(ITensor *input)
+void Fc2d::AddInput(ITensor *input)
 {
     this->p_input_ = dynamic_cast<Tensor4d*>(input);
 }
 
-ITensor *Fc2d_test::LayerInit()
+ITensor *Fc2d::LayerInit()
 {
     length_ = p_input_->C() * p_input_->H() * p_input_->W();
     if(this->p_weights_ == nullptr)
     {
         this->p_weights_ = new Tensor4d(K_, p_input_->C(), p_input_->H(), p_input_->W());
         p_weights_->Randomize();
+        //p_weights_->SetValue(1);
     }
-    // Create cublas Handle
-    checkCudaError(cublasCreate(&cublasHandle_));
     if(this->p_output_ == nullptr)
     {
         p_output_ = new Tensor4d(p_input_->N(), K_, 1, 1);
@@ -58,10 +56,10 @@ ITensor *Fc2d_test::LayerInit()
     return p_output_;
 }
 
-void Fc2d_test::Forward(bool del)
+void Fc2d::Forward(bool del)
 {
     Tensor4d *out = p_output_;
-    checkCudaError(cublasSgemm(cublasHandle_, CUBLAS_OP_T, CUBLAS_OP_N,
+    checkCudaError(cublasSgemm(Session::instance().cublas_handle(), CUBLAS_OP_T, CUBLAS_OP_N,
                                K_, p_input_->N(), length_,
                                &alpha,
                                p_weights_->GpuPointer(), length_,
@@ -69,20 +67,16 @@ void Fc2d_test::Forward(bool del)
                                &beta,
                                out->GpuPointer(),        K_
     ));
-    //std::cout << "Fc layer input********************\n";
-    //p_input_->PrintK(100);
-    //std::cout << "Fc layer output********************\n";
-    //out->PrintK(100);
 }
 
-float *Fc2d_test::Backward(float *down_grads, bool del)
+float *Fc2d::Backward(float *down_grads, bool del)
 {
     if (grads_weights_ == nullptr && grads_data_ == nullptr)
     {
         checkCudaError(cudaMalloc(&grads_weights_, sizeof(float) * p_weights_->Size()));
         checkCudaError(cudaMalloc(&grads_data_,    sizeof(float) * p_input_->Size()));
     }
-    checkCudaError(cublasSgemm(cublasHandle_, CUBLAS_OP_N, CUBLAS_OP_T,
+    checkCudaError(cublasSgemm(Session::instance().cublas_handle(), CUBLAS_OP_N, CUBLAS_OP_T,
                                length_, K_, p_input_->N(),
                                &alpha,
                                p_input_->GpuPointer(), length_, 
@@ -96,13 +90,15 @@ float *Fc2d_test::Backward(float *down_grads, bool del)
     //{
     //    checkCudaError(cudaMemcpy(a, grads_weights_, sizeof(float) * 1000, cudaMemcpyDeviceToHost));
     //    std::cout << "fc weights gradients\n";
-    //    for(int i = 0; i < 1000; i++)
-    //        std::cout << a[i] << ' ';
-    //    std::cout << "\n";
+    //    for(int i = 0; i < 100; i++)
+    //    {    for(int j = 0; j < 10; j++)
+    //            std::cout << a[i * 10 + j] << ' ';
+    //        std::cout << "\n";
+    //    }
     //    free(a);
     //}
 
-    checkCudaError(cublasSgemm(cublasHandle_, CUBLAS_OP_N, CUBLAS_OP_N,
+    checkCudaError(cublasSgemm(Session::instance().cublas_handle(), CUBLAS_OP_N, CUBLAS_OP_N,
                                length_, p_input_->N(), K_,
                                &alpha,
                                p_weights_->GpuPointer(), length_,
@@ -124,17 +120,14 @@ float *Fc2d_test::Backward(float *down_grads, bool del)
     return grads_data_;
 }
 
-void Fc2d_test::UpdateWeights(float learning_rate)
+void Fc2d::UpdateWeights(float learning_rate)
 {
-     //p_weights_->PrintK(100);
      int size = p_weights_->Size();
-     int K = p_weights_->N();
-     WUpdate<<<(size + 255) / 256, 256>>>(p_weights_->GpuPointer(), grads_weights_, size, size / K, learning_rate);
-     //p_weights_->PrintK(100);
-     
+     int N = p_weights_->N();
+     WUpdate<<<(size + 255) / 256, 256>>>(p_weights_->GpuPointer(), grads_weights_, size, size / N, learning_rate);
 }
 
-void Fc2d_test::SetWeights(float data)
+void Fc2d::SetWeights(float data)
 {
      p_weights_->SetValue(data);
 }

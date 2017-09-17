@@ -1,15 +1,14 @@
-#ifndef FC2D_TEST_H
-#define FC2D_TEST_H
+#ifndef FC2D_H
+#define FC2D_H
 
-#include "cublas_v2.h"
 #include "../tensor/tensor4d.h"
 #include "../session.h"
 
-class Fc2d_test : public IOperator
+class Fc2d : public IOperator
 {
 public:
-    Fc2d_test(int k);
-    ~Fc2d_test();
+    Fc2d(int k);
+    ~Fc2d();
     void AddInput(ITensor *input);
     ITensor *LayerInit();
     void Forward(bool del = false);
@@ -29,6 +28,5 @@ private:
     float *grads_weights_;
     float *grads_data_;
     float *grads_bias_;
-    cublasHandle_t cublasHandle_;
 };
 #endif

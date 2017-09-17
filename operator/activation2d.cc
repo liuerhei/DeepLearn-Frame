@@ -47,6 +47,10 @@ void Activation2d::Forward(bool del)
 float *Activation2d::Backward(float *grads_down, bool del)
 {
     if (this->grads_input_ == nullptr)
+    /*
+     * TODO
+     * the grads_input_ don't need in the class, just in the function.
+     */
     {
         checkCudaError(cudaMalloc(&this->grads_input_, sizeof(float) * p_input_->Size()));
     }
@@ -54,14 +58,14 @@ float *Activation2d::Backward(float *grads_down, bool del)
         Session::instance().cudnn_handle(), desc_, &alpha, p_output_->Desc(), p_output_->GpuPointer(), 
         p_output_->Desc(), grads_down, p_input_->Desc(), p_input_->GpuPointer(), &beta, p_input_->Desc(), grads_input_
     ));
-    float *a = (float *)malloc(sizeof(float) * p_input_->Size());
-    checkCudaError(cudaMemcpyAsync(a, grads_input_, sizeof(float) * p_input_->Size(), cudaMemcpyDeviceToHost));
-    std::cout << "activation data gradients\n";
-    //for (int i = 0; i < p_input_->Size(); ++i)
-    for (int i = 0; i < 20; ++i)
-        std::cout << a[i] << ' ';
-    std::cout << "\n";
-    free(a);
+    //float *a = (float *)malloc(sizeof(float) * p_input_->Size());
+    //checkCudaError(cudaMemcpyAsync(a, grads_input_, sizeof(float) * p_input_->Size(), cudaMemcpyDeviceToHost));
+    //std::cout << "activation data gradients\n";
+    ////for (int i = 0; i < p_input_->Size(); ++i)
+    //for (int i = 0; i < 20; ++i)
+    //    std::cout << a[i] << ' ';
+    //std::cout << "\n";
+    //free(a);
     return grads_input_;
 }
 
