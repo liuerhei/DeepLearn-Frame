@@ -8,6 +8,21 @@ __global__ void WUpdate(float *data, float *grad, int size, int RST, float learn
     __syncthreads();
 }
 
+__global__ void FileOnes(float *data, int size)
+{
+    int idx = threadIdx.x + blockDim.x * blockIdx.x;
+    if (idx >= size) return;
+    data[idx] = 1.0f;
+    __syncthreads();
+}
+__global__ void BiasForward(float *data, const float *bias, int size, int c)
+{
+    int idx = threadIdx.x + blockDim.x * blockIdx.x;
+    if (idx >= size) return;
+    data[idx] += bias[idx % c];
+    __syncthreads();
+}
+
 Fc2d::Fc2d(int k) : K_(k)
 {
     alpha          = 1.0f;
@@ -19,6 +34,7 @@ Fc2d::Fc2d(int k) : K_(k)
     grads_bias_    = nullptr;
     grads_data_    = nullptr;
     grads_weights_ = nullptr;
+    onevec         = nullptr;
 }
 
 Fc2d::~Fc2d()
@@ -27,6 +43,7 @@ Fc2d::~Fc2d()
     free(grads_weights_);
     free(grads_data_);
     free(grads_bias_);
+    free(onevec);
 }
 
 void Fc2d::AddInput(ITensor *input)
@@ -41,7 +58,6 @@ ITensor *Fc2d::LayerInit()
     {
         this->p_weights_ = new Tensor4d(K_, p_input_->C(), p_input_->H(), p_input_->W());
         p_weights_->Randomize();
-        //p_weights_->SetValue(1);
     }
     if(this->p_output_ == nullptr)
     {
@@ -52,7 +68,8 @@ ITensor *Fc2d::LayerInit()
         p_bias_ = new Tensor4d(1, K_, 1, 1);
         p_bias_->Randomize();
     }
-    p_output_->PrintShape();
+    checkCudaError(cudaMalloc(&onevec, sizeof(float) * p_input_->N()));
+    FileOnes<<<(p_input_->N() + 255)/256, 256>>>(onevec, p_input_->N());
     return p_output_;
 }
 
@@ -67,6 +84,13 @@ void Fc2d::Forward(bool del)
                                &beta,
                                out->GpuPointer(),        K_
     ));
+    log_info("Forward");
+    p_output_->PrintAll();
+    log_info("bias");
+    p_bias_->PrintAll();
+    BiasForward<<<(p_input_->Size() + 255)/256, 256>>>(p_output_->GpuPointer(), p_bias_->GpuPointer(), p_input_->Size(), K_);
+    log_info("Add bias");
+    p_output_->PrintAll();
 }
 
 float *Fc2d::Backward(float *down_grads, bool del)
@@ -75,6 +99,7 @@ float *Fc2d::Backward(float *down_grads, bool del)
     {
         checkCudaError(cudaMalloc(&grads_weights_, sizeof(float) * p_weights_->Size()));
         checkCudaError(cudaMalloc(&grads_data_,    sizeof(float) * p_input_->Size()));
+        checkCudaError(cudaMalloc(&grads_bias_,    sizeof(float) * p_bias_->Size()));
     }
     checkCudaError(cublasSgemm(Session::instance().cublas_handle(), CUBLAS_OP_N, CUBLAS_OP_T,
                                length_, K_, p_input_->N(),
@@ -84,19 +109,24 @@ float *Fc2d::Backward(float *down_grads, bool del)
                                &beta,
                                grads_weights_,         length_
     ));
-
-    //float *a = (float*)malloc(sizeof(float) * 1000);
-    //if(a != nullptr)
-    //{
-    //    checkCudaError(cudaMemcpy(a, grads_weights_, sizeof(float) * 1000, cudaMemcpyDeviceToHost));
-    //    std::cout << "fc weights gradients\n";
-    //    for(int i = 0; i < 100; i++)
-    //    {    for(int j = 0; j < 10; j++)
-    //            std::cout << a[i * 10 + j] << ' ';
-    //        std::cout << "\n";
-    //    }
-    //    free(a);
-    //}
+    checkCudaError(cublasSgemv(Session::instance().cublas_handle(), CUBLAS_OP_N,
+                               K_, p_input_->N(), 
+                               &alpha,
+                               down_grads,  K_,
+                               onevec,      1,
+                               &alpha,
+                               grads_bias_, 1
+    ));
+    float *a = (float*)malloc(sizeof(float) * 10);
+    if(a != nullptr)
+    {
+        checkCudaError(cudaMemcpy(a, grads_bias_, sizeof(float) * 10, cudaMemcpyDeviceToHost));
+        std::cout << "fc bias gradients\n";
+        for(int i = 0; i < 10; i++)
+             std::cout << a[i] << ' ';
+        std::cout << "\n";
+        free(a);
+    }
 
     checkCudaError(cublasSgemm(Session::instance().cublas_handle(), CUBLAS_OP_N, CUBLAS_OP_N,
                                length_, p_input_->N(), K_,

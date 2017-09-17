@@ -28,5 +28,6 @@ private:
     float *grads_weights_;
     float *grads_data_;
     float *grads_bias_;
+    float *onevec;
 };
 #endif
