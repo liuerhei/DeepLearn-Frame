@@ -56,6 +56,8 @@ public:
      * Now the function does not synchronize with the cpu.
      */
     virtual void UpdateWeights(float);
+
+    virtual void FromFile(const char*);
  
 protected:
     /*

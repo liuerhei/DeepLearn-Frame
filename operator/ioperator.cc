@@ -14,3 +14,8 @@ void IOperator::UpdateWeights(float learning_rate)
 {
 
 }
+
+void IOperator::FromFile(const char *fileprefix)
+{
+
+}

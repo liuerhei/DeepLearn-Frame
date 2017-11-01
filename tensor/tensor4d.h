@@ -6,6 +6,7 @@
 #include "../wheel.h"
 #include "itensor.h"
 #include "cudnn.h"
+#include "math.h"
 
 class Tensor4d : public ITensor
 {
@@ -18,6 +19,7 @@ public:
 
     void Randomize(float diff = 0.0f);
     void SetValue(float val);
+    //void SetValue(float *data, size_t size, bool onehot = false);
     void SetValue(float *data, size_t size);
     void PrintK(int k) const;
     void PrintAll() const;

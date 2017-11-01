@@ -64,7 +64,9 @@ void Tensor4d::Randomize(float diff)
     for(int i = 0; i < this->size_; i++)
     {
         h_data_[i] = (rand() - RAND_MAX / 2) / (10.0 * RAND_MAX) + diff;
+        //h_data_[i] = (rand() - RAND_MAX / 2) / (sqrt(2.0 / size_) * RAND_MAX) + diff;
         //h_data_[i] = rand() / (100.0 * RAND_MAX) + diff;
+        //h_data_[i] = rand() / (10.0 * RAND_MAX) + diff;
     }
     this->SyncToGpu();
 }
@@ -76,12 +78,28 @@ void Tensor4d::SetValue(float val)
     this->SyncToGpu();
 }
 
-void Tensor4d::SetValue(float *data, size_t size)
+void Tensor4d::SetValue(float *data, size_t size/*, bool onehot*/)
 {
     size = size > size_ ? size_ : size;
     for(size_t i = 0; i < size; ++i)
         h_data_[i] = data[i];
     this->SyncToGpu();
+    //if(!onehot)
+    //{
+    //    size = size > size_ ? size_ : size;
+    //    for(size_t i = 0; i < size; ++i)
+    //        h_data_[i] = data[i];
+    //}
+    //size = size > size_ ? size_ : size;
+    //for(size_t i = 0; i < size; ++i)
+    //{
+    //    for(size_t j = 0; j < 10; ++j)
+    //    {
+    //        h_data_[i * 10 + j] = 0;
+    //    }
+    //    h_data_[(int)data[i]] = 1;
+    //}
+    //this->SyncToGpu();
 }
 
 void Tensor4d::PrintK(int count) const

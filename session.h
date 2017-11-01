@@ -38,6 +38,7 @@ private:
         p_output_       = nullptr;
         checkCudnn(cudnnCreate(&cudnnHandle_));
         checkCudaError(cublasCreate(&cublasHandle_));
+        //allocate_workspace();
         if(!model_.empty())
              model_.clear();
         if(!output_.empty())

@@ -1,21 +1,21 @@
 #include "conv2d.h"
 
 
-__global__ void DUpdate(float *data, float *grad, int size, int RST, float learn)
-{
-    int idx = threadIdx.x + blockDim.x * blockIdx.x;
-    if (idx >= size) return;
-    data[idx] += grad[idx % RST] * learn;
-    __syncthreads();
-}
-
-__global__ void AddBias(float *data, float *bias, int size, int k)
-{
-    int idx = threadIdx.x + blockDim.x * blockIdx.x;
-    if (idx >= size) return;
-    data[idx] += bias[idx % k];
-    __syncthreads();
-}
+//__global__ void DUpdate(float *data, float *grad, int size, int RST, float learn)
+//{
+//    int idx = threadIdx.x + blockDim.x * blockIdx.x;
+//    if (idx >= size) return;
+//    data[idx] += grad[idx % RST] * learn;
+//    __syncthreads();
+//}
+//
+//__global__ void AddBias(float *data, float *bias, int size, int k)
+//{
+//    int idx = threadIdx.x + blockDim.x * blockIdx.x;
+//    if (idx >= size) return;
+//    data[idx] += bias[idx % k];
+//    __syncthreads();
+//}
 
 Conv2d::Conv2d(int k, int s, int t, Padding_t mode)
     : K_(k), S_(s), T_(t), padding_mode_(mode)
@@ -48,8 +48,8 @@ Conv2d::~Conv2d()
 void Conv2d::AddInput(ITensor *input)
 {
     this->p_input_ = dynamic_cast<Tensor4d*>(input);
-    //std::cout << "The input tensor is\n";
-    //p_input_->PrintK(100);
+    //log_info("Conv Input");
+    //p_input_->PrintShape();
 }
 
 ITensor *Conv2d::LayerInit()
@@ -57,6 +57,7 @@ ITensor *Conv2d::LayerInit()
     if (this->p_filter_ == nullptr)
     {
         this->p_filter_ = new Filter4d(K_, p_input_->C(), S_, T_);
+        //p_filter_->SetValue(1);
         p_filter_->Randomize();
     }
     // Init the space and weights of filter.
@@ -130,11 +131,13 @@ ITensor *Conv2d::LayerInit()
 
     if (this->bias_ == nullptr)
     {
-        bias_ = new Tensor4d(1, C_out, H_out, W_out);
+        //bias_ = new Tensor4d(1, C_out, H_out, W_out);
+        bias_ = new Tensor4d(1, C_out, 1, 1);
         // in lenet, the bias tensor shape is 1, channel, 1, 1
-        bias_->Randomize(0.1);
+        bias_->Randomize();
+        //bias_->SetValue(0.01);
     }
-    p_output_->PrintShape();
+    //p_output_->PrintShape();
     return p_output_;
 }
 
@@ -148,18 +151,22 @@ void Conv2d::Forward(bool del)
         &beta, out->Desc(), out->GpuPointer() 
     ));
     //std::cout << "Conv layer input****************************\n";
-    //p_input_->PrintK(100);
+    //p_input_->PrintK(10);
     //std::cout << "Conv layer output****************************\n";
-    //out->PrintK(100);
+    //out->PrintK(10);
     //std::cout << "conv layer bias******************************\n";
-    //bias_->PrintK(100);
-    //AddBias<<<(out->Size() + 255) / 256, 256>>>(out->GpuPointer(), bias_->GpuPointer(), out->Size(), bias_->Size());
-    //checkCudnn(cudnnAddTensor(
-    //    Session::instance().cudnn_handle(), &alpha, bias_->Desc(), bias_->GpuPointer(), 
-    //    &beta, out->Desc(), out->GpuPointer()
-    //));
+    //bias_->PrintK(10);
+    //AddBias<<<(out->Size() + 255) / 256, 256>>>(out->GpuPointer(), bias_->GpuPointer(), out->Size(), p_output_->H() * p_output_->W()); 
+    checkCudnn(cudnnAddTensor(
+        Session::instance().cudnn_handle(), &alpha, bias_->Desc(), bias_->GpuPointer(), 
+        &alpha, out->Desc(), out->GpuPointer()
+    ));
+    //log_info("Conv Input");
+    //p_input_->PrintAll();
+    //log_info("Conv Output");
+    //out->PrintK(10);
     //std::cout << "Conv layer add bias & out ****************************\n";
-    //out->PrintK(100);
+    //out->PrintK(10);
 }
 
 float *Conv2d::Backward(float *down_grads, bool del)
@@ -177,6 +184,10 @@ float *Conv2d::Backward(float *down_grads, bool del)
      //     Session::instance().cudnn_handle(), &alpha, p_output_->Desc(),
      //     down_grads, &beta, bias_->Desc(), grads_bias_
      //));
+     checkCudnn(cudnnConvolutionBackwardBias(
+          Session::instance().cudnn_handle(), &alpha, p_output_->Desc(), down_grads,
+          &beta, bias_->Desc(), grads_bias_
+     ));
      checkCudnn(cudnnConvolutionBackwardFilter(
           Session::instance().cudnn_handle(), &alpha, p_input_->Desc(), p_input_->GpuPointer(),
           p_output_->Desc(), down_grads, desc_, CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0,
@@ -190,23 +201,29 @@ float *Conv2d::Backward(float *down_grads, bool del)
           &beta, p_input_->Desc(), grads_data_
      ));
 
-     //float *a = (float *)malloc(sizeof(float) * p_filter_->Size());
-     //checkCudaError(cudaMemcpy(a, grads_filter_, sizeof(float) * p_filter_->Size(), cudaMemcpyDeviceToHost));
-     //std::cout << "conv filter gradients\n";
-     //for(int i = 0; i < p_filter_->Size(); ++i)
+     //float *a = (float *)malloc(sizeof(float) * 10); 
+     //checkCudaError(cudaMemcpy(a, grads_bias_, sizeof(float) * 10, cudaMemcpyDeviceToHost));
+     //std::cout << "conv bias gradients\n";
+     //for(int i = 0; i < 10; ++i)
      //   std::cout << a[i] << ' ';
-     ////   a[i] = i;
-     ////checkCudaError(cudaMemcpy(grads_filter_, a, sizeof(float) * p_filter_->Size(), cudaMemcpyHostToDevice));
-     //// This is a test, it seems that the gradients always is 0
      //std::cout << "\n";
+     //free(a);
 
-     //float *b = (float *)malloc(sizeof(float) * p_input_->Size());
-     //checkCudaError(cudaMemcpy(b, grads_data_,  sizeof(float) * p_input_->Size(),   cudaMemcpyDeviceToHost));
-     //std::cout << "conv data gradients\n";
-     //for(int i = 0; i < p_input_->Size(); ++i)
+     //float *b = (float *)malloc(sizeof(float) * 10);
+     //checkCudaError(cudaMemcpy(b, grads_filter_,  sizeof(float) * 10,   cudaMemcpyDeviceToHost));
+     //std::cout << "conv filter gradients\n";
+     //for(int i = 0; i < 10; ++i)
      //   std::cout << b[i] << ' ';
      //std::cout << "\n";
      //free(b);
+
+     //float *c = (float *)malloc(sizeof(float) * 10);
+     //checkCudaError(cudaMemcpy(b, grads_data_,  sizeof(float) * 10, cudaMemcpyDeviceToHost));
+     //std::cout << "conv data gradients\n";
+     //for(int i = 0; i < 10; ++i)
+     //   std::cout << b[i] << ' ';
+     //std::cout << "\n";
+     //free(c);
      return grads_data_;
 }
 
@@ -214,13 +231,24 @@ void Conv2d::UpdateWeights(float learning_rate)
 {
     int size = p_filter_->Size();
     int K = p_filter_->K();
-    //std::cout << "**************************************\n";
+    float rate = -learning_rate;
+    //std::cout << " Before weights\n";
     //p_filter_->PrintK(10);
-    DUpdate<<<(size + 255) / 256, 256>>>(p_filter_->GpuPointer(), grads_filter_, size, size / K, learning_rate);
-    //DUpdate<<<(bias_->Size() + 255) / 256, 256>>>(bias_->GpuPointer(), grads_bias_, bias_->Size(), bias_->Size(), 1);
+    //DUpdate<<<(size + 255) / 256, 256>>>(p_filter_->GpuPointer(), grads_filter_, size, size / K, rate);
+    //std::cout << "bias **********\n";
+    //bias_->PrintAll();
+    checkCudaError(cublasSaxpy(
+        Session::instance().cublas_handle(), p_filter_->Size(), 
+        &rate, grads_filter_, 1, p_filter_->GpuPointer(), 1
+    ));
+    checkCudaError(cublasSaxpy(
+        Session::instance().cublas_handle(), bias_->Size(), 
+        &rate, grads_bias_, 1, bias_->GpuPointer(), 1
+    ));
+    //log_info(" After weights");
     //p_filter_->PrintK(10);
-    //std::cout << "**************************************\n";
-    //bias_->PrintK(100);
+    //log_info("bias **********");
+    //bias_->PrintAll();
 }
 
 void Conv2d::SetWeights(float data)
@@ -242,5 +270,32 @@ void Conv2d::ToFile(const char *fileprefix)
     }
     //this->p_filter_->SyncToCpu();
     fwrite(this->p_filter_->CpuPointer(), sizeof(float), this->p_filter_->Size(), fp);
+    fclose(fp);
+}
+
+void Conv2d::FromFile(const char *fileprefix)
+{
+    std::stringstream ssf, ssbf;
+    ssf << fileprefix << ".bin";
+    ssbf << fileprefix << ".bias.bin";
+
+    FILE *fp = fopen(ssf.str().c_str(), "r");
+    if(!fp)
+    {
+        log_error("FILE connot open");
+        exit(0);
+    }
+    fread(this->p_filter_->CpuPointer(), sizeof(float), this->p_filter_->Size(), fp);
+    this->p_filter_->SyncToGpu();
+    fclose(fp);
+
+    fp = fopen(ssbf.str().c_str(), "r");
+    if(!fp)
+    {
+        log_error("FILE connot open");
+        exit(0);
+    }
+    fread(this->bias_->CpuPointer(), sizeof(float), this->bias_->Size(), fp);
+    this->bias_->SyncToGpu();
     fclose(fp);
 }

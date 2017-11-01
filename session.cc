@@ -57,8 +57,10 @@ size_t Session::workspace_size() const
 
 void Session::AddInput(Tensor4d *input)
 {
-    p_input_ = input;
+    p_input_ = dynamic_cast<ITensor*>(input);
 }
+//TODO
+//Can merge the AddInput and Build.
 
 void Session::AddLayer(IOperator *op)
 {
@@ -77,17 +79,21 @@ void Session::Build()
         input  = output;
     }
     p_output_ = output;
+    std::cout << p_output_ << "\n";
+    //model_.at(0)->FromFile("conv1");
+    //model_.at(2)->FromFile("conv2");
+    //model_.at(4)->FromFile("ip1");
+    //model_.at(5)->FromFile("ip2");
 }
 
 void Session::Forward()
 {
-    ITensor *input  = p_input_;
-    ITensor *output = nullptr;
+    //ITensor *input  = p_input_;
     for (int i = 0; i < model_.size(); ++i)
     {
-        model_.at(i)->AddInput(input);
+        //model_.at(i)->AddInput(input);
         model_.at(i)->Forward(false);
-        input = output_.at(i);
+        //input = output_.at(i);
     }
 }
 
@@ -98,6 +104,7 @@ void Session::Backward(float *loss)
     for (iter = model_.rbegin(); iter != model_.rend(); ++iter)
     {
         grads_loss = (*iter)->Backward(grads_loss, false);
+        //grads_loss 规模不同，在后向计算中是否没问题
     }
 }
 

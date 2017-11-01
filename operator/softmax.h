@@ -17,7 +17,7 @@
 class Softmax : public IOperator
 {
 public:
-      Softmax(cudnnSoftmaxMode_t mode = CUDNN_SOFTMAX_MODE_INSTANCE,
+      Softmax(cudnnSoftmaxMode_t mode = CUDNN_SOFTMAX_MODE_CHANNEL,
               cudnnSoftmaxAlgorithm_t algo = CUDNN_SOFTMAX_ACCURATE);
       ~Softmax();
       void AddInput(ITensor *input);

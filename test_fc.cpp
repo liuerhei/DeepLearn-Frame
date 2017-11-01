@@ -32,7 +32,7 @@ int main(void)
     Tensor4d *c = dynamic_cast<Tensor4d*>(fc_out);
     log_ok("**********************************");
     fc->Backward(c->GpuPointer(), false);
-    fc->UpdateWeights(0.001);
+    fc->UpdateWeights(1);
 
     return 0;
 }

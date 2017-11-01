@@ -62,8 +62,7 @@ void Filter4d::Randomize()
 {
     for(int i = 0; i < this->size_; i++)
     {
-        //d_data_[i] = (rand() - RAND_MAX / 2) / (10.0 * RAND_MAX);
-        h_data_[i] = rand() / (float)RAND_MAX;
+        h_data_[i] = (rand() - RAND_MAX / 2)/ (10.0 * RAND_MAX);
     }
     this->SyncToGpu();
 }

@@ -28,7 +28,6 @@ ITensor *Softmax::LayerInit()
     {
         p_output_ = new Tensor4d(p_input_->N(), p_input_->C(), p_input_->H(), p_input_->W());
     }
-    p_output_->PrintShape();
     return p_output_;
 }
 
@@ -36,17 +35,26 @@ void Softmax::Forward(bool del)
 {
     Tensor4d *out = p_output_;
     checkCudnn(cudnnSoftmaxForward(
-        Session::instance().cudnn_handle(), algo_, mode_, &alpha, p_input_->Desc(), p_input_->GpuPointer(), 
+        Session::instance().cudnn_handle(), algo_, mode_, 
+        &alpha, p_input_->Desc(), p_input_->GpuPointer(), 
         &beta, out->Desc(), out->GpuPointer()
     ));
-    std::cout << "Softmax layer input*****************\n";
-    p_input_->PrintK(64);
-    std::cout << "Softmax layer output*****************\n";
-    out->PrintK(64);
+    //std::cout << "Softmax layer input*****************\n";
+    //p_input_->PrintK(10);
+    //log_info("Softmax layer output");
+    //out->PrintK(10);
 }
 
 float *Softmax::Backward(float *grads_down, bool del)
 {
+    //float *b = (float*)malloc(sizeof(float) * p_input_->Size());
+    //checkCudaError(cudaMemcpyAsync(b, grads_down, sizeof(float) * p_input_->Size(), cudaMemcpyDeviceToHost));
+    //log_info("softmax input loss");
+    //for(int i = 0; i < p_input_->Size(); ++i)
+    //   std::cout << b[i] << ' ';
+    //std::cout << "\n";
+    //free(b);
+
     if (this->grads_input_ == nullptr)
     {
        checkCudaError(cudaMalloc(&this->grads_input_, sizeof(float) * p_input_->Size()));
@@ -58,8 +66,10 @@ float *Softmax::Backward(float *grads_down, bool del)
 
     //float *a = (float*)malloc(sizeof(float) * p_input_->Size());
     //checkCudaError(cudaMemcpyAsync(a, grads_input_, sizeof(float) * p_input_->Size(), cudaMemcpyDeviceToHost));
+    //log_info("softmax backward data gradients");
     //for(int i = 0; i < p_input_->Size(); ++i)
     //   std::cout << a[i] << ' ';
     //std::cout << "\n";
+    //free(a);
     return grads_input_;
 }

@@ -7,8 +7,7 @@ LDFLAGS = -arch=sm_35 -lcuda -lcudnn -lcublas
 
 # project
 #
-#run: main.o wheel.o session.o loss.o					
-run: test_fc.o wheel.o session.o loss.o					\
+run: main.o wheel.o session.o loss.o					\
 	tensor/itensor.o operator/ioperator.o  				\
 	operator/conv2d.o operator/pooling2d.o operator/activation2d.o operator/softmax.o 				\
 	operator/fc2d.o	operator/batchnormalization2d.o												\
@@ -24,7 +23,7 @@ operator/fc2d_test.o: operator/fc2d_test.cu
 	 $(CXX) $(CXXFLAGS)   -c -o $@ $^
 loss.o: loss.cu
 	 $(CXX) $(CXXFLAGS)   -c -o $@ $^
-main.o: main.cu
+main.o: mnist_fc.cu
 	 $(CXX) $(CXXFLAGS)   -c -o $@ $^
 #
 # phony target

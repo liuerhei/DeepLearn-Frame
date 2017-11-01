@@ -25,3 +25,8 @@ The problem has resoluved by using cublasSscal function to reduce the loss data.
 Add session to build the framework, but have problem as follow: the final output should return; build framework and forward should devide into peices; And maybe the different layer should re-build. Solve the first problem, but the second problem still here.                                                --2017-09-14
 Solve the problem yesterday, But the softmax layer still have problem.                                                                   --2017-09-15
 The Fc layer is right, add the bias forward and backward to fc layer. Can use test_fc.cc to test. Move handle to session, and the batchnormaliza have bug.                                                                                                                                                       --2017-09-17
+Today, the problem is the fc layer result was less than -1000, so the gradience overflow, we can solve it by add activation layer, but the backward fc layer make the weights less than 0, so after the activation layer, the result was 0. TODO                                                                 --2017-09-21
+The label tensor was wrong before. Today solve the problem, and the fc layer could work, but the mnist still doesn't work.               --2017-09-24
+Solved the cudnnAddTensor problem.
+TODO: Need to delete p_output from LayerInit function. Because the p_output makes the batchsize unique, expecially inference.
+Solve the problem of loss. Because when testing, the label isn't the image.                                                              --2017-10-31

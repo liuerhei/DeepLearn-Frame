@@ -4,6 +4,9 @@
 #include "../tensor/tensor4d.h"
 #include "../session.h"
 
+/*
+ * This is a fullyconnected layer
+ */
 class Fc2d : public IOperator
 {
 public:
@@ -15,9 +18,10 @@ public:
     float *Backward(float *down_grads, bool del = false);
     void UpdateWeights(float learning_rate = 0.01);
     void SetWeights(float data);
+    void FromFile(const char *fileprefix);
 private:
     int K_;
-    size_t size_in_bytes;
+    //size_t size_in_bytes;
     size_t length_;
     float alpha;
     float beta;

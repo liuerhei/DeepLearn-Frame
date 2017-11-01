@@ -7,6 +7,9 @@
 #include "../tensor/filter4d.h"
 #include "../session.h"
 
+/*
+ * This is a convolution layer
+ */
 class Conv2d : public IOperator
 {
 public:
@@ -18,6 +21,7 @@ public:
     float *Backward(float *c, bool del = false);
     void UpdateWeights(float learning_rate = 0.01);
     void ToFile(const char *fileprefix);
+    void FromFile(const char *fileprefix);
 
     /*
      * This function is used to init the filter weights by reading data from files

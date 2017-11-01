@@ -61,10 +61,13 @@ ITensor *Pooling2d::LayerInit()
 
 void Pooling2d::Forward(bool del)
 {
+    //p_input_->PrintAll();
     checkCudnn(cudnnPoolingForward(
         Session::instance().cudnn_handle(), desc_, &alpha, this->p_input_->Desc(),
         this->p_input_->GpuPointer(), &beta, this->p_output_->Desc(), this->p_output_->GpuPointer() 
     ));
+    //log_info("Pooling Output");
+    //p_output_->PrintK(10);
     //std::cout << "Pooling layer input************************\n";
     //p_input_->PrintK(100);
     //std::cout << "Pooling layer output************************\n";
